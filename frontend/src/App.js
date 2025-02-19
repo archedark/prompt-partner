@@ -22,12 +22,14 @@ import PromptList from './components/PromptList';
 import PromptEditor from './components/PromptEditor';
 import MasterPrompt from './components/MasterPrompt';
 import { getPrompts, createPrompt, updatePrompt, deletePrompt } from './api';
+import SelectedPromptList from './components/SelectedPromptList';
 
 function App() {
   // State: all prompts, list of selected prompt IDs, currently editing prompt (if any)
   const [prompts, setPrompts] = useState([]);
   const [selectedPrompts, setSelectedPrompts] = useState([]);
   const [editingPrompt, setEditingPrompt] = useState(null);
+  const [selectedPromptOrder, setSelectedPromptOrder] = useState([]);
 
   // Decide layout direction based on viewport size (e.g., stack on mobile, row on desktop)
   const flexDirection = useBreakpointValue({ base: 'column', md: 'row' });
@@ -94,15 +96,21 @@ function App() {
    * @param {number} id - The unique ID of the prompt
    */
   const handleSelectPrompt = (id) => {
-    setSelectedPrompts((prev) =>
-      prev.includes(id) ? prev.filter((pid) => pid !== id) : [...prev, id]
-    );
+    setSelectedPrompts((prev) => {
+      const newSelection = prev.includes(id)
+        ? prev.filter((pid) => pid !== id)
+        : [...prev, id];
+      
+      // Update the order when selection changes
+      setSelectedPromptOrder(newSelection);
+      return newSelection;
+    });
   };
 
-  // Combine selected prompts' text
-  const selectedPromptsText = prompts
-    .filter((p) => selectedPrompts.includes(p.id))
-    .map((p) => p.content)
+  // Get the combined text based on the order
+  const selectedPromptsText = selectedPromptOrder
+    .map((id) => prompts.find((p) => p.id === id)?.content)
+    .filter(Boolean)
     .join('\n');
 
   return (
@@ -125,13 +133,20 @@ function App() {
           />
         </Box>
 
-        {/* Right Column: PromptEditor + MasterPrompt in a vertical stack */}
+        {/* Right Column: PromptEditor + SelectedPromptList + MasterPrompt */}
         <Flex direction="column" flex="1" gap={6}>
           <Box>
             <PromptEditor
               onAddPrompt={handleAddPrompt}
               onEditPrompt={handleEditPrompt}
               editingPrompt={editingPrompt}
+            />
+          </Box>
+          <Box>
+            <SelectedPromptList
+              selectedPrompts={selectedPromptOrder}
+              prompts={prompts}
+              onReorder={setSelectedPromptOrder}
             />
           </Box>
           <Box>
