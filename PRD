@@ -1,0 +1,180 @@
+# Product Requirements Document (PRD): Prompt Builder Web Application
+
+**Product Name**: Prompt Builder  
+**Version**: 1.0 (MVP)  
+**Date**: October 2023  
+
+---
+
+## 1. Introduction
+
+### Purpose
+The Prompt Builder is a web-based tool designed to help you store, organize, and combine prompts efficiently. It includes a tagging system for categorization and allows you to select multiple prompts, merge them into a single "Master Prompt," and copy it to your clipboard—all with a focus on speed and simplicity.
+
+### Target Audience
+You, the creator, are the primary user. This tool is built for personal use to streamline your prompt management process.
+
+### Goals
+- Quickly store and retrieve prompts with tags.
+- Combine selected prompts into a single "Master Prompt."
+- Enable easy copying to the clipboard.
+- Develop and deploy the MVP within a single evening using AI-assisted coding.
+
+---
+
+## 2. Key Features
+
+The MVP will prioritize the following core functionalities:
+
+1. **Prompt Management**
+   - Add new prompts with text and optional tags.
+   - Edit existing prompts.
+   - Delete prompts.
+
+2. **Prompt List**
+   - Display all prompts with checkboxes for selection.
+   - Show tags alongside each prompt.
+
+3. **Master Prompt Generation**
+   - Combine selected prompts into a "Master Prompt."
+   - Provide a button to copy the result to the clipboard.
+
+4. **User Interface**
+   - A minimalistic, single-page design with a prompt list, editor, and Master Prompt display.
+
+---
+
+## 3. Functional Requirements
+
+### 3.1 Prompt Management
+- **Create Prompt**: Enter prompt text and optional tags (comma-separated) in a form to add a new prompt.
+- **Edit Prompt**: Modify the text and tags of an existing prompt via the same form.
+- **Delete Prompt**: Remove a prompt from the list with a single action (e.g., a delete button).
+
+### 3.2 Prompt List
+- List all prompts in a scrollable container.
+- Each prompt displays:
+  - A checkbox for selection.
+  - The prompt text.
+  - Associated tags.
+- Order prompts by creation date (newest first).
+
+### 3.3 Master Prompt
+- Combine the text of all selected prompts (via checkboxes) in the order they appear in the list.
+- Display the combined text in a dedicated text area.
+- Include a "Copy to Clipboard" button to copy the Master Prompt.
+
+### 3.4 User Interface
+- Single-page layout with:
+  - **Header**: App title (e.g., "Prompt Builder").
+  - **Prompt List**: Scrollable list of prompts with checkboxes.
+  - **Prompt Editor**: Form for adding or editing prompts.
+  - **Master Prompt Section**: Text area and copy button.
+- Keep the design clean and functional for rapid development.
+
+---
+
+## 4. Technical Requirements
+
+### 4.1 Frontend
+- **Framework**: React.js (using `create-react-app` for speed).
+- **Components**:
+  - `PromptList`: Renders the list of prompts with checkboxes.
+  - `PromptEditor`: Form for creating or editing prompts.
+  - `MasterPrompt`: Displays the combined text and copy button.
+- **State Management**: Use React’s `useState` or Context API.
+- **Clipboard**: Implement the Clipboard API (`navigator.clipboard.writeText`).
+
+### 4.2 Backend
+- **Framework**: Node.js with Express.js.
+- **Database**: SQLite (via `sqlite3` or `better-sqlite3`) for simplicity.
+- **API Endpoints**:
+  - `POST /prompts`: Create a prompt.
+  - `GET /prompts`: Fetch all prompts.
+  - `PUT /prompts/:id`: Update a prompt.
+  - `DELETE /prompts/:id`: Delete a prompt.
+
+### 4.3 Data Model
+- **Prompt Table**:
+  - `id`: Integer (auto-incrementing primary key).
+  - `content`: Text (the prompt itself).
+  - `tags`: Text (comma-separated tags, e.g., "coding, AI").
+
+### 4.4 Deployment
+- **Frontend**: Deploy to Vercel or Netlify.
+- **Backend**: Deploy to Heroku or a similar service.
+- Configure the frontend to communicate with the backend API URL.
+
+---
+
+## 5. Non-Functional Requirements
+
+- **Performance**: Handle up to 100 prompts with no noticeable lag.
+- **Usability**: Ensure intuitive navigation with minimal clicks.
+- **Security**: No authentication needed (personal use, no sensitive data).
+- **Browser Compatibility**: Works on Chrome, Firefox, and Edge.
+
+---
+
+## 6. Development Plan
+
+Here’s a step-by-step guide to get this done tonight:
+
+### 6.1 Setup (1 Hour)
+- Initialize a Git repository.
+- Set up two projects:
+  - **Frontend**: `npx create-react-app prompt-builder`.
+  - **Backend**: `mkdir prompt-builder-api`, then `npm init -y` and install `express`, `sqlite3`, and `cors`.
+
+### 6.2 Backend Development (2 Hours)
+- Create an SQLite database with a `prompts` table.
+- Implement API endpoints:
+  - `POST /prompts`: Insert a new prompt.
+  - `GET /prompts`: Return all prompts.
+  - `PUT /prompts/:id`: Update a prompt by ID.
+  - `DELETE /prompts/:id`: Delete a prompt by ID.
+- Use `nodemon` for automatic restarts during development.
+
+### 6.3 Frontend Development (3 Hours)
+- Build components:
+  - **PromptList**: Fetch prompts via `GET /prompts`, render with checkboxes.
+  - **PromptEditor**: Form with text and tags inputs, handle create/edit via `POST`/`PUT`.
+  - **MasterPrompt**: Update text area when checkboxes change, add clipboard functionality.
+- Connect to the backend using `fetch` or `axios`.
+
+### 6.4 Testing (1 Hour)
+- Test CRUD operations manually.
+- Verify Master Prompt updates as prompts are checked/unchecked.
+- Confirm clipboard copying works.
+
+### 6.5 Deployment (1 Hour)
+- Push backend to Heroku: `git push heroku main`.
+- Deploy frontend to Vercel: `vercel --prod`.
+- Update frontend API base URL to point to the deployed backend.
+
+**Total Time**: ~8 hours (perfect for one focused evening!)
+
+---
+
+## 7. Recommendations for Speed
+
+- **AI Assistance**: Use GitHub Copilot or Cursor to generate boilerplate code (e.g., API routes, React components).
+- **Minimal Styling**: Stick to basic CSS or a lightweight library like Tailwind CSS.
+- **Error Handling**: Add simple alerts for API failures; refine later.
+- **Local Testing**: Run backend on `localhost:5000` and frontend on `localhost:3000` with CORS enabled.
+
+---
+
+## 8. Future Enhancements
+
+Defer these for post-MVP:
+- Drag-and-drop reordering of prompts.
+- Tag-based filtering.
+- AI integration (e.g., send Master Prompt to ChatGPT).
+- Dark mode toggle.
+
+---
+
+## 9. Conclusion
+
+This PRD outlines a lean, functional Prompt Builder MVP that you can build and deploy tonight with AI assistance. It focuses on your core needs—prompt storage, tagging, and combination—while keeping the tech stack simple (React, Node.js, SQLite). Follow the development plan, leverage AI tools, and you’ll have a working app by morning. Let me know if you need help coding any specific part—happy building!

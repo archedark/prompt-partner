@@ -1,0 +1,85 @@
+# Project Instructions
+
+Use these guidelines to build the Prompt Builder app efficiently.
+
+## Overview
+
+Prompt Builder is a single-page web app for managing prompts. It allows users to add, edit, and delete prompts with tags, select multiple prompts to create a "Master Prompt," and copy it to the clipboard.
+
+## Tech Stack
+
+- **Frontend:** React.js (via `create-react-app`)
+- **Backend:** Node.js, Express.js, SQLite (`sqlite3` or `better-sqlite3`)
+- **Deployment:** Frontend on Vercel or Netlify, Backend on Heroku
+
+## Project Structure
+
+- **Frontend:**
+  - `src/components/` - UI components (e.g., `PromptList`, `PromptEditor`, `MasterPrompt`)
+  - `src/App.js` - Main app logic and layout
+- **Backend:**
+  - `server/routes/prompts.js` - API routes for prompts
+  - `server/db.js` - Database connection and queries
+  - `server/server.js` - Server setup
+
+## Rules
+
+### General Rules
+
+- Leverage AI coding assistants (e.g., GitHub Copilot, Cursor) to accelerate development.
+- Focus on core functionality; defer non-essential features (e.g., tag filtering, dark mode).
+- Perform manual testing; automated tests are optional for the MVP.
+- Use JavaScript for speed; TypeScript is optional.
+
+#### Env Rules
+
+- Use `.env` files for configuration:
+  - Frontend: Use `REACT_APP_` prefix (e.g., `REACT_APP_API_URL`).
+  - Backend: Store database paths or API settings if needed.
+- Do not hardcode sensitive values like API URLs.
+
+### Frontend Rules
+
+- **Components:**
+  - `PromptList`: Display prompts with checkboxes for selection.
+  - `PromptEditor`: Form to add or edit prompts (text and tags).
+  - `MasterPrompt`: Show combined text of selected prompts with a copy button.
+- **State Management:**
+  - Use `useState` for component state (e.g., selected prompts).
+  - Use `useEffect` to fetch prompts on mount.
+  - Optional: Use Context API for sharing prompts data across components.
+- **API Interactions:**
+  - Use `fetch` to call backend API endpoints.
+  - Handle basic loading states; skip extensive error handling for MVP.
+- **UI:**
+  - Implement a single-page layout with prompt list, editor, and Master Prompt sections.
+  - Keep design minimal; use basic CSS, CSS modules, or inline styles.
+  - Use `navigator.clipboard.writeText` for copying the Master Prompt.
+
+### Backend Rules
+
+- **Database:**
+  - Use SQLite with a `prompts` table:
+    - `id`: Integer (auto-incrementing primary key)
+    - `content`: Text (prompt text)
+    - `tags`: Text (comma-separated, e.g., "coding, AI")
+    - `created_at`: Timestamp (default to current time)
+- **API Endpoints:**
+  - `POST /prompts`: Create a new prompt.
+  - `GET /prompts`: Retrieve all prompts (ordered by `created_at`, newest first).
+  - `PUT /prompts/:id`: Update a prompt by ID.
+  - `DELETE /prompts/:id`: Delete a prompt by ID.
+- **Implementation:**
+  - Use Express.js for RESTful routing.
+  - Use `sqlite3` or `better-sqlite3` for database operations.
+  - Enable CORS if frontend and backend domains differ.
+  - Keep error handling simple (e.g., basic status codes and messages).
+
+### Deployment Rules
+Currently not deploying. App is for personal use only.
+<!-- - **Frontend:**
+  - Deploy to Vercel or Netlify.
+  - Set `REACT_APP_API_URL` in `.env` to the backend API base URL.
+- **Backend:**
+  - Deploy to Heroku.
+  - Note: SQLite data resets on Heroku dyno restarts; accept this for MVP or use a hosted database for persistence. -->
