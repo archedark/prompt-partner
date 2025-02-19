@@ -4,9 +4,15 @@ const bodyParser = require('body-parser');
 const { createPrompt, getPrompts, updatePrompt, deletePrompt } = require('./db');
 
 const app = express();
-const PORT = 5000;
+const PORT = process.env.PORT || 5001;
 
-app.use(cors());
+// Enable CORS for frontend
+app.use(cors({
+    origin: 'http://localhost:3001',  // Update this to match your frontend port
+    methods: ['GET', 'POST', 'PUT', 'DELETE'],
+    allowedHeaders: ['Content-Type']
+}));
+
 app.use(bodyParser.json());
 
 app.post('/prompts', (req, res) => {
