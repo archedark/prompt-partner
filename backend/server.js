@@ -16,9 +16,11 @@ app.use(cors({
 app.use(bodyParser.json());
 
 app.post('/prompts', (req, res) => {
-  const { content, tags } = req.body;
+  const { name, content, tags } = req.body;
   if (!content) return res.status(400).json({ error: 'Content is required' });
-  createPrompt(content, tags || '', (err, id) => {
+  if (!name) return res.status(400).json({ error: 'Name is required' });
+  
+  createPrompt(name, content, tags || '', (err, id) => {
     if (err) return res.status(500).json({ error: err.message });
     res.status(201).json({ id });
   });
@@ -33,9 +35,11 @@ app.get('/prompts', (req, res) => {
 
 app.put('/prompts/:id', (req, res) => {
   const { id } = req.params;
-  const { content, tags } = req.body;
+  const { name, content, tags } = req.body;
   if (!content) return res.status(400).json({ error: 'Content is required' });
-  updatePrompt(id, content, tags || '', (err) => {
+  if (!name) return res.status(400).json({ error: 'Name is required' });
+  
+  updatePrompt(id, name, content, tags || '', (err) => {
     if (err) return res.status(500).json({ error: err.message });
     res.status(204).send();
   });

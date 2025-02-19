@@ -27,7 +27,7 @@ import {
 } from '@chakra-ui/react';
 
 const PromptEditor = ({ onAddPrompt, onEditPrompt, editingPrompt }) => {
-  // Local state for content and tags
+  const [name, setName] = useState('');
   const [content, setContent] = useState('');
   const [tags, setTags] = useState('');
 
@@ -36,6 +36,7 @@ const PromptEditor = ({ onAddPrompt, onEditPrompt, editingPrompt }) => {
    * @description Helper function to clear local state
    */
   const resetForm = () => {
+    setName('');
     setContent('');
     setTags('');
   };
@@ -43,6 +44,7 @@ const PromptEditor = ({ onAddPrompt, onEditPrompt, editingPrompt }) => {
   // When editingPrompt changes (to an actual prompt), fill the form
   useEffect(() => {
     if (editingPrompt) {
+      setName(editingPrompt.name);
       setContent(editingPrompt.content);
       setTags(editingPrompt.tags);
     } else {
@@ -57,9 +59,9 @@ const PromptEditor = ({ onAddPrompt, onEditPrompt, editingPrompt }) => {
   const handleSubmit = (e) => {
     e.preventDefault();
     if (editingPrompt) {
-      onEditPrompt(editingPrompt.id, content, tags);
+      onEditPrompt(editingPrompt.id, name, content, tags);
     } else {
-      onAddPrompt(content, tags);
+      onAddPrompt(name, content, tags);
     }
     resetForm();
   };
@@ -71,6 +73,12 @@ const PromptEditor = ({ onAddPrompt, onEditPrompt, editingPrompt }) => {
       </Heading>
       <form onSubmit={handleSubmit}>
         <Stack spacing={3}>
+          <Input
+            value={name}
+            onChange={(e) => setName(e.target.value)}
+            placeholder="Enter prompt name"
+            required
+          />
           <Textarea
             value={content}
             onChange={(e) => setContent(e.target.value)}

@@ -43,14 +43,16 @@ function App() {
   /**
    * @function handleAddPrompt
    * @description Create a new prompt in the database, then update local state
+   * @param {string} name - The name of the prompt
    * @param {string} content - The text content of the prompt
    * @param {string} tags - A comma-separated string of tags
    */
-  const handleAddPrompt = async (content, tags) => {
-    const newPromptId = await createPrompt(content, tags);
+  const handleAddPrompt = async (name, content, tags) => {
+    const newPromptId = await createPrompt(name, content, tags);
     setPrompts([
       {
         id: newPromptId,
+        name,
         content,
         tags,
         created_at: new Date().toISOString(),
@@ -63,13 +65,14 @@ function App() {
    * @function handleEditPrompt
    * @description Update an existing prompt in the database, then update local state
    * @param {number} id - The unique ID of the prompt
+   * @param {string} name - The updated name of the prompt
    * @param {string} content - The updated prompt content
    * @param {string} tags - Updated tags (comma-separated)
    */
-  const handleEditPrompt = async (id, content, tags) => {
-    await updatePrompt(id, content, tags);
+  const handleEditPrompt = async (id, name, content, tags) => {
+    await updatePrompt(id, name, content, tags);
     setPrompts(
-      prompts.map((p) => (p.id === id ? { ...p, content, tags } : p))
+      prompts.map((p) => (p.id === id ? { ...p, name, content, tags } : p))
     );
     setEditingPrompt(null);
   };

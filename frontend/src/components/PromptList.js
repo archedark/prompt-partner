@@ -66,6 +66,9 @@ const PromptList = ({
             />
             <Box flex="1">
               <Text fontWeight="bold" noOfLines={1}>
+                {prompt.name}
+              </Text>
+              <Text color="gray.600" noOfLines={2}>
                 {prompt.content}
               </Text>
               {prompt.tags && (
@@ -82,6 +85,7 @@ const PromptList = ({
                 onClick={() =>
                   onEditPromptClick({
                     id: prompt.id,
+                    name: prompt.name,
                     content: prompt.content,
                     tags: prompt.tags,
                   })

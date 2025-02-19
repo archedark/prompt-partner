@@ -5,21 +5,21 @@ export const getPrompts = async () => {
   return response.json();
 };
 
-export const createPrompt = async (content, tags) => {
+export const createPrompt = async (name, content, tags) => {
   const response = await fetch(`${API_URL}/prompts`, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ content, tags }),
+    body: JSON.stringify({ name, content, tags }),
   });
   const { id } = await response.json();
   return id;
 };
 
-export const updatePrompt = async (id, content, tags) => {
+export const updatePrompt = async (id, name, content, tags) => {
   await fetch(`${API_URL}/prompts/${id}`, {
     method: 'PUT',
     headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ content, tags }),
+    body: JSON.stringify({ name, content, tags }),
   });
 };
 

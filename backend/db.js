@@ -5,6 +5,7 @@ db.serialize(() => {
   db.run(`
     CREATE TABLE IF NOT EXISTS prompts (
       id INTEGER PRIMARY KEY AUTOINCREMENT,
+      name TEXT NOT NULL,
       content TEXT NOT NULL,
       tags TEXT,
       created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
@@ -12,8 +13,8 @@ db.serialize(() => {
   `);
 });
 
-const createPrompt = (content, tags, callback) => {
-  db.run('INSERT INTO prompts (content, tags) VALUES (?, ?)', [content, tags], function(err) {
+const createPrompt = (name, content, tags, callback) => {
+  db.run('INSERT INTO prompts (name, content, tags) VALUES (?, ?, ?)', [name, content, tags], function(err) {
     callback(err, this.lastID);
   });
 };
@@ -22,8 +23,8 @@ const getPrompts = (callback) => {
   db.all('SELECT * FROM prompts ORDER BY created_at DESC', [], callback);
 };
 
-const updatePrompt = (id, content, tags, callback) => {
-  db.run('UPDATE prompts SET content = ?, tags = ? WHERE id = ?', [content, tags, id], callback);
+const updatePrompt = (id, name, content, tags, callback) => {
+  db.run('UPDATE prompts SET name = ?, content = ?, tags = ? WHERE id = ?', [name, content, tags, id], callback);
 };
 
 const deletePrompt = (id, callback) => {
