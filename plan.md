@@ -37,7 +37,7 @@ The Prompt Partner app is a single-page web application designed for personal us
 
 ## Frontend Development
 1. **Initialize Frontend:**
-   - [ ] Navigate to the `frontend` directory and run `npx create-react-app .`
+   - [X] Navigate to the `frontend` directory and run `npx create-react-app .`
 2. **Create Components:**
    - [ ] Create `PromptList.js`: Displays all prompts with checkboxes.
    - [ ] Create `PromptEditor.js`: Form for adding/editing prompts.
