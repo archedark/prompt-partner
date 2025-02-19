@@ -92,6 +92,37 @@ To modify these ports:
 2. Update the `FRONTEND_URL` in backend/.env
 3. Update the `REACT_APP_API_URL` in frontend/.env
 
+## Testing
+
+### Running Tests
+
+Frontend tests:
+```bash
+cd frontend
+
+# Run tests in watch mode
+npm test
+```
+
+Backend tests:
+```bash
+cd backend
+
+# Run tests
+npm test
+
+# Run tests in watch mode
+npm run test:watch
+```
+
+### Manual Testing
+For manual testing of the application:
+1. Start both frontend and backend servers
+2. Test basic CRUD operations for prompts
+3. Verify prompt selection and combination
+4. Test drag-and-drop reordering
+5. Verify clipboard operations
+
 ## License
 
 MIT License
