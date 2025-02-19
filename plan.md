@@ -54,4 +54,34 @@
 
 ## Testing
 1. **Manual Testing**  
-   - [ ] Perform manual UI testing
+   - [X] Perform manual UI testing
+2. **Unit Testing**
+   - [ ] Implement unit tests
+3. **Automated Testing**
+   - [ ] Identify useful automated test frameworks
+
+## Additional Features
+1. **Prompt Reordering**
+   - [ ] Implement drag-and-drop reordering
+   - [ ] Manual testing
+   - [ ] Unit testing
+2. **Tag Filtering**
+   - [ ] Implement tag filtering
+   - [ ] Manual testing
+   - [ ] Unit testing
+3. **Repo Integration**
+   - [ ] Implement repo integration
+   - [ ] Manual testing
+   - [ ] Unit testing
+4. **Prompt History**
+   - [ ] Implement prompt history
+   - [ ] Manual testing
+   - [ ] Unit testing
+
+## Documentation
+1. **README**
+   - [ ] Update README with setup instructions
+2. **Documentation**
+   - [ ] Document code
+3. **Testing**
+   - [ ] Document testing strategy
