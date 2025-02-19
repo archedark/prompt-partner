@@ -1,7 +1,3 @@
-<ai_context>
-This file outlines the development plan for the Prompt Partner app, a tool for managing and combining prompts. It is designed to guide the development process efficiently, leveraging AI coding assistants for speed.
-</ai_context>
-
 # Prompt Partner App Development Plan
 
 The Prompt Partner app is a single-page web application designed for personal use to manage and combine prompts efficiently. This plan outlines the steps to build a functional Minimum Viable Product (MVP) with a focus on core features: adding, editing, and deleting prompts with tags, selecting multiple prompts to create a "Master Prompt," and copying it to the clipboard. Below are the detailed steps to achieve this.
