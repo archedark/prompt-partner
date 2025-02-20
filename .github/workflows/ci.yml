@@ -53,9 +53,7 @@ jobs:
           backend/package-lock.json
 
     - name: Install Dependencies
-      run: |
-        cd frontend && npm ci
-        cd ../backend && npm ci
+      run: cd frontend && npm ci && cd ../backend && npm ci
     
     - name: Build Frontend
       working-directory: frontend
@@ -66,9 +64,7 @@ jobs:
       with:
         working-directory: frontend
         spec: cypress/integration/promptWorkflows.spec.js
-        start: |
-          npm run serve & 
-          cd ../backend && npm run start:ci
+        start: npm run serve & cd ../backend && npm run start:ci
         wait-on: 'http://localhost:3001, http://localhost:5001/prompts'
         wait-on-timeout: 120
         command: npm run cypress:run 
