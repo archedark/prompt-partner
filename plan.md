@@ -91,27 +91,79 @@
    - [X] Implement tag filtering based on tests
    - [X] Manual testing to verify behavior
    - [X] Add partial match filtering
-3. **Repo Integration**
+3. **Search Filtering**
+   - [ ] Update filtering to use prompt names as well as tags
+     - [ ] Backend Test Development
+       - [ ] Write unit tests for GET /prompts endpoint
+         - [ ] Test search matches in prompt name only
+         - [ ] Test search matches in tags only
+         - [ ] Test search matches in both name and tags
+         - [ ] Test case-insensitive matching
+         - [ ] Test partial word matching
+         - [ ] Test empty search returns all prompts
+         - [ ] Test special characters handling
+       - [ ] Write SQL query tests
+         - [ ] Test LIKE clause matching
+         - [ ] Test case-insensitive search
+         - [ ] Test combined name OR tags logic
+     - [ ] Backend Implementation
+       - [ ] Update GET /prompts endpoint to accept search parameter
+       - [ ] Modify SQL query to search both name and tags
+       - [ ] Implement case-insensitive search
+       - [ ] Verify all tests pass
+     - [ ] Frontend Test Development
+       - [ ] Write component tests for search input
+         - [ ] Test placeholder text and accessibility
+         - [ ] Test input change handlers
+         - [ ] Test debounced search behavior
+       - [ ] Write tests for search results display
+         - [ ] Test match highlighting (name vs tags)
+         - [ ] Test loading states
+         - [ ] Test error states
+         - [ ] Test empty results state
+       - [ ] Write tests for filter state management
+         - [ ] Test search term updates
+         - [ ] Test filter application logic
+     - [ ] Frontend Implementation
+       - [ ] Update search input component
+       - [ ] Implement match type highlighting
+       - [ ] Add loading and error states
+       - [ ] Verify all tests pass
+     - [ ] Integration Test Development
+       - [ ] Write end-to-end search flow tests
+         - [ ] Test searching across names and tags
+         - [ ] Test partial matching behavior
+         - [ ] Test case sensitivity
+         - [ ] Test error handling
+     - [ ] Integration Implementation
+       - [ ] Connect frontend to backend
+       - [ ] Implement error handling
+       - [ ] Verify all integration tests pass
+     - [ ] Documentation & Manual Testing
+       - [ ] Update API documentation
+       - [ ] Add search examples to README
+       - [ ] Perform manual testing of edge cases
+4 **Repo Integration**
    - [ ] Identify repo integration requirements
    - [ ] Write tests for repo integration
    - [ ] Implement repo integration based on tests
    - [ ] Manual testing to verify behavior
-4. **Prompt History**
+5 **Prompt History**
    - [ ] Identify prompt history requirements
    - [ ] Write tests for prompt history
    - [ ] Implement prompt history based on tests
    - [ ] Manual testing to verify behavior
-5. **Expandable Prompt List**
+6 **Expandable Prompt List**
    - [ ] Identify expandable prompt list requirements
    - [ ] Write tests for expandable prompt list
    - [ ] Implement expandable prompt list based on tests
    - [ ] Manual testing to verify behavior
-6. **Display Token Count in Prompt List**
+7 **Display Token Count in Prompt List**
    - [ ] Identify token count requirements
    - [ ] Write tests for token count
    - [ ] Implement token count based on tests
    - [ ] Manual testing to verify behavior
-7. **Clear Selection Button**
+8 **Clear Selection Button**
    - [ ] Identify clear selection button requirements
    - [ ] Write tests for clear selection button
    - [ ] Implement clear selection button based on tests
