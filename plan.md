@@ -60,36 +60,51 @@
    - [X] Configure React Testing Library for frontend
    - [X] Add test scripts to package.json
 3. **Unit Testing**
-   - [ ] Frontend Tests
-     - [ ] Component rendering
-     - [ ] User interactions
-     - [ ] API integration
+   - [X] Frontend Tests
+     - [X] Component rendering
+     - [X] User interactions
+     - [X] API integration
+     - [X] Verify tests pass
    - [ ] Backend Tests
      - [ ] Database operations
      - [ ] API endpoints
      - [ ] Error handling
+     - [ ] Verify tests pass
 4. **Integration Testing**
    - [ ] End-to-end workflows
    - [ ] API response handling
    - [ ] State management
+   - [ ] Verify tests pass
 
 ## Additional Features
 1. **Prompt Reordering**
-   - [ ] Implement drag-and-drop reordering
-   - [ ] Manual testing
-   - [ ] Unit testing
+   - [X] Write tests for drag-and-drop reordering
+     - [X] Test drag start/end events
+     - [X] Test reorder position calculations
+     - [X] Test state updates after reordering
+   - [X] Implement drag-and-drop based on tests
+   - [X] Manual testing to verify behavior
 2. **Tag Filtering**
-   - [ ] Implement tag filtering
-   - [ ] Manual testing
-   - [ ] Unit testing
+   - [ ] Write tests for tag filtering
+     - [ ] Test filter UI rendering
+     - [ ] Test filter application logic
+     - [ ] Test filtered results display
+   - [ ] Implement tag filtering based on tests
+   - [ ] Manual testing to verify behavior
 3. **Repo Integration**
-   - [ ] Implement repo integration
-   - [ ] Manual testing
-   - [ ] Unit testing
+   - [ ] Write tests for repo integration
+     - [ ] Test repo connection handling
+     - [ ] Test prompt sync operations
+     - [ ] Test error scenarios
+   - [ ] Implement repo integration based on tests
+   - [ ] Manual testing to verify behavior
 4. **Prompt History**
-   - [ ] Implement prompt history
-   - [ ] Manual testing
-   - [ ] Unit testing
+   - [ ] Write tests for prompt history
+     - [ ] Test history tracking logic
+     - [ ] Test history display components
+     - [ ] Test undo/redo operations
+   - [ ] Implement prompt history based on tests
+   - [ ] Manual testing to verify behavior
 
 ## Documentation
 1. **README**

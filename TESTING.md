@@ -68,11 +68,6 @@ The testing strategy is divided into three primary areas:
   - Set up a separate testing configuration to ensure tests do not interfere with production data.
   - Run a sequence of API calls and verify the system’s behavior.
 
-### 3.4 (Optional) Performance and Load Testing
-- **Tools:** Apache Benchmark (ab) or similar tools.
-- **Objective:**
-  - Evaluate the API’s performance under concurrent requests and identify any potential bottlenecks.
-
 ---
 
 ## 4. Testing Environment Setup
