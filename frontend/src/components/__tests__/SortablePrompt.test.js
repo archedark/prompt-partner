@@ -13,19 +13,19 @@
  * - We do not fully test DnD logic here; that usually requires advanced setups.
  */
 
-import React from 'react';
-import { render, screen } from '@testing-library/react';
-import { SortablePrompt } from '../SortablePrompt';
-
 jest.mock('@dnd-kit/sortable', () => ({
-  useSortable: jest.fn(() => ({
+  useSortable: () => ({
     attributes: {},
     listeners: {},
     setNodeRef: jest.fn(),
     transform: null,
     transition: null,
-  })),
+  }),
 }));
+
+import React from 'react';
+import { render, screen } from '@testing-library/react';
+import { SortablePrompt } from '../SortablePrompt';
 
 describe('<SortablePrompt />', () => {
   test('displays prompt name and content', () => {
