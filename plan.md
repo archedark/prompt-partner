@@ -74,8 +74,8 @@
    - [X] End-to-end workflows
    - [X] API response handling
    - [X] State management
-   - [ ] Use in-memory SQLite database for testing
-   - [ ] Verify tests pass
+   - [X] Use in-memory SQLite database for testing
+   - [X] Verify tests pass
 
 ## Additional Features
 1. **Prompt Reordering**
