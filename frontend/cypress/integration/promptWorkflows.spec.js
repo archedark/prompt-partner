@@ -44,7 +44,7 @@ describe('Prompt Partner Integration - Prompt Workflows', () => {
     });
   });
 
-  it('Test Case 1: Full Prompt Creation Workflow', () => {
+  it('creates new prompt with name, content and tags', () => {
     cy.visit('http://localhost:3001');
     cy.get('input[placeholder="Enter prompt name"]').type(`${TEST_PREFIX} Test Prompt`);
     cy.get('textarea[placeholder="Enter prompt content"]').type('Test Content');
@@ -67,7 +67,7 @@ describe('Prompt Partner Integration - Prompt Workflows', () => {
     });
   });
 
-  it('Test Case 2: Prompt Editing Workflow', () => {
+  it('updates existing prompt with new values', () => {
     // Create initial test prompt
     cy.request('POST', `${baseApiUrl()}/prompts`, {
       name: `${TEST_PREFIX} Old Name`,
@@ -97,7 +97,7 @@ describe('Prompt Partner Integration - Prompt Workflows', () => {
     });
   });
 
-  it('Test Case 3: Prompt Deletion Workflow', () => {
+  it('deletes prompt from the list', () => {
     cy.request('POST', `${baseApiUrl()}/prompts`, {
       name: `${TEST_PREFIX} Delete Test`,
       content: 'Test Content',
@@ -119,7 +119,7 @@ describe('Prompt Partner Integration - Prompt Workflows', () => {
   // You can uncomment and adjust the test below once you set up a reliable method
   // for simulating drag-and-drop in your environment. It's partially implemented already.
   /*
-  it('Test Case 4: Master Prompt Generation and Copy', () => {
+  it('combines and copies multiple prompts', () => {
     cy.request('POST', `${baseApiUrl()}/prompts`, {
       name: 'Prompt A',
       content: 'Content A',
@@ -144,7 +144,7 @@ describe('Prompt Partner Integration - Prompt Workflows', () => {
   });
   */
 
-  it('Test Case 5: API Error Handling - Invalid Creation', () => {
+  it('handles invalid prompt creation gracefully', () => {
     cy.visit('http://localhost:3001');
     cy.get('input[placeholder="Enter prompt name"]').type(`${TEST_PREFIX} Invalid`);
     cy.get('input[placeholder="Tags (comma-separated)"]').type('test-invalid');
@@ -157,7 +157,7 @@ describe('Prompt Partner Integration - Prompt Workflows', () => {
     });
   });
 
-  it('Test Case 6: API Error Handling - Database Failure', () => {
+  it('handles database errors gracefully', () => {
     // Intercept the GET request and return a 500 error
     cy.intercept('GET', `${baseApiUrl()}/prompts`, {
       statusCode: 500,
@@ -175,7 +175,7 @@ describe('Prompt Partner Integration - Prompt Workflows', () => {
 
   // Similarly, you can uncomment the next test once you have stable drag-and-drop
   /*
-  it('Test Case 7: State Sync After Reordering', () => {
+  it('maintains prompt order after reordering', () => {
     cy.request('POST', `${baseApiUrl()}/prompts`, { ... });
     // ...
   });
