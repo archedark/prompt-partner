@@ -6,7 +6,7 @@ on:
 
 jobs:
   unit-tests:
-    runs-on: windows-latest
+    runs-on: ubuntu-latest
     steps:
     - uses: actions/checkout@v3
     
@@ -36,7 +36,7 @@ jobs:
       run: npm run test:ci
 
   integration-tests:
-    runs-on: windows-latest
+    runs-on: ubuntu-latest
     env:
       REACT_APP_API_URL: http://localhost:3001
       PORT: 3001
