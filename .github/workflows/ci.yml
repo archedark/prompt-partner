@@ -37,6 +37,9 @@ jobs:
 
   integration-tests:
     runs-on: windows-latest
+    env:
+      REACT_APP_API_URL: http://localhost:3001
+      PORT: 3001
     steps:
     - uses: actions/checkout@v3
     
@@ -53,6 +56,14 @@ jobs:
       run: |
         cd frontend && npm ci
         cd ../backend && npm ci
+    
+    - name: Start Servers
+      run: |
+        cd backend
+        start /b cmd /c npm start
+        cd ../frontend
+        start /b cmd /c npm start
+        timeout /t 30 /nobreak > nul
     
     - name: Run Integration Tests
       working-directory: ./frontend
