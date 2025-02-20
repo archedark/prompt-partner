@@ -86,10 +86,11 @@
    - [X] Implement drag-and-drop based on tests
    - [X] Manual testing to verify behavior
 2. **Tag Filtering**
-   - [ ] Identify tag filtering requirements
-   - [ ] Write tests for tag filtering
-   - [ ] Implement tag filtering based on tests
-   - [ ] Manual testing to verify behavior
+   - [X] Identify tag filtering requirements
+   - [X] Write tests for tag filtering
+   - [X] Implement tag filtering based on tests
+   - [X] Manual testing to verify behavior
+   - [X] Add partial match filtering
 3. **Repo Integration**
    - [ ] Identify repo integration requirements
    - [ ] Write tests for repo integration

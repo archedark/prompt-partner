@@ -1,53 +1,65 @@
 /**
  * @file App.js
- * @description Main application component. Sets up the high-level layout using Chakra UI components:
- * - Header at the top
- * - Two-column layout for prompt list & editor on larger screens
- * - Master prompt area displayed below on small screens or to the right on large screens
+ * @description Main application component for Prompt Partner. Manages state for prompts,
+ *              handles CRUD operations, and renders the UI layout with tag filtering.
  *
  * @dependencies
- * - React, useState, useEffect
- * - Chakra UI (Box, Flex, Heading, useBreakpointValue)
- * - Local modules: PromptList, PromptEditor, MasterPrompt, api calls (getPrompts, createPrompt, updatePrompt, deletePrompt)
+ * - React: For component lifecycle and state management
+ * - Chakra UI: For UI components and responsive layout
+ * - api.js: For API interactions with the backend
+ * - PromptList: For displaying available prompts
+ * - PromptEditor: For creating/editing prompts
+ * - MasterPrompt: For displaying combined selected prompts
+ * - SelectedPromptList: For managing selected prompt order
  *
  * @notes
- * - Uses Chakra's responsive design with 'Flex' and 'Box' to arrange sections.
- * - Manages state for prompts, selected prompts, and editing logic.
+ * - Fetches prompts on mount using useEffect
+ * - Uses responsive layout with Chakra's useBreakpointValue
+ * - Implements tag filtering with real-time updates
+ * - Handles edge cases like empty prompt lists
  */
 
 import React, { useState, useEffect } from 'react';
-import { Box, Flex, Heading, useBreakpointValue } from '@chakra-ui/react';
-import './App.css';
+import {
+  Box,
+  Heading,
+  Flex,
+  useBreakpointValue,
+  Input,
+  Button,
+  HStack,
+} from '@chakra-ui/react';
 import PromptList from './components/PromptList';
 import PromptEditor from './components/PromptEditor';
 import MasterPrompt from './components/MasterPrompt';
-import { getPrompts, createPrompt, updatePrompt, deletePrompt } from './api';
 import SelectedPromptList from './components/SelectedPromptList';
+import { getPrompts, createPrompt, updatePrompt, deletePrompt } from './api';
 
 function App() {
-  // State: all prompts, list of selected prompt IDs, currently editing prompt (if any)
   const [prompts, setPrompts] = useState([]);
   const [selectedPrompts, setSelectedPrompts] = useState([]);
-  const [editingPrompt, setEditingPrompt] = useState(null);
   const [selectedPromptOrder, setSelectedPromptOrder] = useState([]);
+  const [editingPrompt, setEditingPrompt] = useState(null);
+  const [tagFilter, setTagFilter] = useState('');
 
-  // Decide layout direction based on viewport size (e.g., stack on mobile, row on desktop)
+  // Responsive layout: column on mobile, row on desktop
   const flexDirection = useBreakpointValue({ base: 'column', md: 'row' });
 
   // Fetch prompts on component mount
   useEffect(() => {
-    (async () => {
+    const fetchPrompts = async () => {
       const data = await getPrompts();
       setPrompts(data);
-    })();
+    };
+    fetchPrompts();
   }, []);
 
   /**
    * @function handleAddPrompt
-   * @description Create a new prompt in the database, then update local state
-   * @param {string} name - The name of the prompt
-   * @param {string} content - The text content of the prompt
-   * @param {string} tags - A comma-separated string of tags
+   * @description Creates a new prompt in the database and updates local state
+   * @param {string} name - Prompt name
+   * @param {string} content - Prompt content
+   * @param {string} tags - Comma-separated tags
    */
   const handleAddPrompt = async (name, content, tags) => {
     const newPromptId = await createPrompt(name, content, tags);
@@ -65,11 +77,11 @@ function App() {
 
   /**
    * @function handleEditPrompt
-   * @description Update an existing prompt in the database, then update local state
-   * @param {number} id - The unique ID of the prompt
-   * @param {string} name - The updated name of the prompt
-   * @param {string} content - The updated prompt content
-   * @param {string} tags - Updated tags (comma-separated)
+   * @description Updates an existing prompt and refreshes local state
+   * @param {number} id - Prompt ID
+   * @param {string} name - Updated name
+   * @param {string} content - Updated content
+   * @param {string} tags - Updated tags
    */
   const handleEditPrompt = async (id, name, content, tags) => {
     await updatePrompt(id, name, content, tags);
@@ -81,8 +93,8 @@ function App() {
 
   /**
    * @function handleDeletePrompt
-   * @description Delete a prompt in the database, then remove it from local state
-   * @param {number} id - The unique ID of the prompt to delete
+   * @description Deletes a prompt and updates local state
+   * @param {number} id - Prompt ID to delete
    */
   const handleDeletePrompt = async (id) => {
     await deletePrompt(id);
@@ -92,22 +104,46 @@ function App() {
 
   /**
    * @function handleSelectPrompt
-   * @description Toggles selection of a prompt ID in the local state
-   * @param {number} id - The unique ID of the prompt
+   * @description Toggles prompt selection
+   * @param {number} id - Prompt ID
    */
   const handleSelectPrompt = (id) => {
     setSelectedPrompts((prev) => {
       const newSelection = prev.includes(id)
         ? prev.filter((pid) => pid !== id)
         : [...prev, id];
-      
-      // Update the order when selection changes
       setSelectedPromptOrder(newSelection);
       return newSelection;
     });
   };
 
-  // Get the combined text based on the order
+  /**
+   * @function handleTagFilterChange
+   * @description Updates the tag filter state
+   * @param {string} value - Filter input value
+   */
+  const handleTagFilterChange = (value) => {
+    setTagFilter(value.trim().toLowerCase());
+  };
+
+  /**
+   * @function clearTagFilter
+   * @description Resets the tag filter
+   */
+  const clearTagFilter = () => {
+    setTagFilter('');
+  };
+
+  // Filter prompts based on tagFilter
+  const filteredPrompts = tagFilter
+    ? prompts.filter((prompt) => {
+        if (!prompt.tags) return false;
+        const tags = prompt.tags.toLowerCase().split(',').map((tag) => tag.trim());
+        return tags.some(tag => tag.startsWith(tagFilter));
+      })
+    : prompts;
+
+  // Generate combined text based on selected order
   const selectedPromptsText = selectedPromptOrder
     .map((id) => prompts.find((p) => p.id === id)?.content)
     .filter(Boolean)
@@ -115,17 +151,32 @@ function App() {
 
   return (
     <Box p={4}>
-      {/* Header */}
       <Heading as="h1" size="xl" mb={4} textAlign="center">
         Prompt Partner
       </Heading>
+      
+      {/* Tag Filter Input */}
+      <HStack mb={4}>
+        <Input
+          placeholder="Filter by tag (e.g., coding)"
+          value={tagFilter}
+          onChange={(e) => handleTagFilterChange(e.target.value)}
+          maxW="300px"
+        />
+        <Button
+          onClick={clearTagFilter}
+          colorScheme="gray"
+          isDisabled={!tagFilter}
+        >
+          Clear Filter
+        </Button>
+      </HStack>
 
-      {/* Layout for PromptList + PromptEditor + MasterPrompt */}
       <Flex direction={flexDirection} gap={6}>
         {/* Left Column: PromptList */}
         <Box flex="1" mb={{ base: 4, md: 0 }}>
           <PromptList
-            prompts={prompts}
+            prompts={filteredPrompts}
             selectedPrompts={selectedPrompts}
             onSelectPrompt={handleSelectPrompt}
             onDeletePrompt={handleDeletePrompt}

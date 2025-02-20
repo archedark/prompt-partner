@@ -156,189 +156,69 @@ The testing strategy is divided into three primary areas:
     5. Check the MasterPrompt textarea after reordering.
   - **Expected Result:** MasterPrompt updates to "Prompt B\nPrompt A" after reordering, reflecting the new order in SelectedPromptList.
 
----
+### 6.7 Tag Filtering Integration Tests (`promptWorkflows.spec.js`)
 
-## 4. Testing Environment Setup
-
-### Frontend
-- **Dependencies:** Ensure that `jest`, `@testing-library/react`, and related packages are installed.
-- **Scripts:** Add or update test scripts in `package.json` (for example, `"test": "react-scripts test"`).
-- **Running Tests:** Execute `npm test` in the frontend directory.
-
-### Backend
-- **Dependencies:** Install `jest`, `supertest`, and any necessary mocking libraries.
-- **Scripts:** Add or update test scripts in the backend `package.json` (for example, `"test": "jest"`).
-- **Running Tests:** Execute `npm test` in the backend directory.
-- **Note:** Use a separate test database configuration to avoid data conflicts with the production environment.
-
----
-
-## 5. Future Considerations
-
-- **Continuous Integration:** Integrate with CI/CD pipelines (e.g., GitHub Actions) to run tests automatically on pushes or pull requests.
-- **Code Coverage:** Utilize tools like Istanbul/nyc to monitor code coverage.
-- **User Feedback:** Adapt and expand test cases based on real-world usage and reported issues.
-
----
-
-## 6. Test Cases
-
-Below are the documented test cases for the frontend components based on existing unit tests in `frontend/src/components/__tests__/` and `frontend/src/App.test.js`. Backend test cases are not yet implemented.
-
-### 6.1 App Component (`App.test.js`)
-
-#### Test Case 1: Renders the Main Header
-- **Description:** Verifies that the "Prompt Partner" header is rendered on the screen.
-- **Preconditions:** 
-  - `getPrompts` API call is mocked to return an empty array
-  - All API mocks are cleared before each test
+#### Test Case 1: Basic Tag Filtering
+- **Description:** Verifies that the tag filtering system works correctly across the full application stack.
+- **Preconditions:** Clean test database with predefined prompts having various tags.
 - **Steps:**
-  1. Mock `getPrompts` to resolve with an empty array
-  2. Render the `<App />` component
-  3. Check for the presence of the "Prompt Partner" text
-- **Expected Result:** The header text "Prompt Partner" is found in the document
+  1. Create test prompts with different tags via API
+  2. Visit the application
+  3. Verify all prompts are initially visible
+  4. Filter by "coding" tag
+  5. Verify only prompts with "coding" tag are visible
+  6. Clear filter
+  7. Verify all prompts are visible again
+- **Expected Result:** Tag filtering correctly shows/hides prompts based on tag selection.
 
-#### Test Case 2: Fetches and Displays Prompts on Mount
-- **Description:** Ensures that prompts are fetched on component mount and displayed in the UI.
-- **Preconditions:** 
-  - `getPrompts` API call is mocked
-  - All API mocks are cleared before each test
+#### Test Case 2: Non-existent Tag Handling
+- **Description:** Tests the application's behavior when filtering by a non-existent tag.
+- **Preconditions:** Clean test database with predefined prompts.
 - **Steps:**
-  1. Mock `getPrompts` to resolve with a single prompt `{ id: 101, name: 'Test Prompt', content: 'Test Content' }`
-  2. Render the `<App />` component
-  3. Wait for the fetch to resolve using `waitFor`
-  4. Check for the presence of "Test Prompt" in the document
-  5. Verify that `getPrompts` was called exactly once
-- **Expected Result:** 
-  - "Test Prompt" is displayed in the document
-  - `getPrompts` is called exactly once
+  1. Create test prompts with known tags
+  2. Visit the application
+  3. Filter by "nonexistent" tag
+  4. Verify "No prompts found" message
+  5. Clear filter
+  6. Verify all prompts reappear
+- **Expected Result:** Application gracefully handles non-matching tag filters.
 
-### 6.2 MasterPrompt Component (`MasterPrompt.test.js`)
-
-#### Test Case 1: Renders the Combined Text in the Textarea
-- **Description:** Confirms that the `selectedPromptsText` prop is displayed in the textarea.
-- **Preconditions:** None.
+#### Test Case 3: Filter State Persistence
+- **Description:** Validates that the filter state persists when adding new prompts.
+- **Preconditions:** Clean test database.
 - **Steps:**
-  1. Render `<MasterPrompt selectedPromptsText="Example combined text" />`.
-  2. Check the textarea's value for "Example combined text".
-- **Expected Result:** The textarea displays "Example combined text".
+  1. Create initial prompts with tags
+  2. Visit the application
+  3. Apply "coding" tag filter
+  4. Add new prompt with "coding" tag
+  5. Verify new prompt appears in filtered list
+  6. Add prompt without "coding" tag
+  7. Verify non-matching prompt doesn't appear
+- **Expected Result:** Filter state maintains consistency when adding new prompts.
 
-#### Test Case 2: Copy Button is Disabled if No Text is Present
-- **Description:** Verifies that the "Copy to Clipboard" button is disabled when `selectedPromptsText` is empty.
-- **Preconditions:** Clipboard API is mocked.
+#### Test Case 4: Case-Insensitive Tag Filtering
+- **Description:** Confirms that tag filtering works regardless of case.
+- **Preconditions:** Clean test database with prompts having mixed-case tags.
 - **Steps:**
-  1. Render `<MasterPrompt selectedPromptsText="" />`.
-  2. Check if the "Copy to Clipboard" button is disabled.
-- **Expected Result:** The button is disabled.
+  1. Create prompts with various tag cases
+  2. Visit the application
+  3. Test uppercase filter
+  4. Test mixed-case filter
+  5. Verify matches are found regardless of case
+- **Expected Result:** Tag filtering works case-insensitively.
 
-#### Test Case 3: Clicking Copy Button Writes Text to Clipboard if Text is Present
-- **Description:** Ensures that clicking the copy button calls the clipboard API with the correct text when `selectedPromptsText` is non-empty.
-- **Preconditions:** Clipboard API is mocked.
+#### Test Case 5: Partial Tag Match Filtering
+- **Description:** Verifies that tag filtering works with partial matches at the start of tags.
+- **Preconditions:** Clean test database with prompts having various tags.
 - **Steps:**
-  1. Render `<MasterPrompt selectedPromptsText="Some text" />`.
-  2. Verify the "Copy to Clipboard" button is not disabled.
-  3. Click the button.
-  4. Check if `navigator.clipboard.writeText` was called with "Some text".
-- **Expected Result:** Button is enabled, and `writeText` is called with "Some text".
-
-### 6.3 PromptEditor Component (`PromptEditor.test.js`)
-
-#### Test Case 1: Renders Add Prompt Form When editingPrompt is Null
-- **Description:** Verifies that the form renders in "add" mode and submits correctly when no prompt is being edited.
-- **Preconditions:** `onAddPrompt` and `onEditPrompt` are mocked.
-- **Steps:**
-  1. Render `<PromptEditor onAddPrompt={mock} onEditPrompt={mock} editingPrompt={null} />`.
-  2. Check for "Add Prompt" heading.
-  3. Fill name input with "New Prompt" and content textarea with "New content".
-  4. Click the "Add" button.
-  5. Verify `onAddPrompt` was called with "New Prompt", "New content", and empty tags.
-- **Expected Result:** "Add Prompt" is displayed, and `onAddPrompt` is called with correct arguments.
-
-#### Test Case 2: Renders Edit Prompt Form When editingPrompt is Provided
-- **Description:** Ensures the form renders in "edit" mode with pre-filled values and submits updates correctly.
-- **Preconditions:** `onAddPrompt` and `onEditPrompt` are mocked; `editingPrompt` is `{ id: 3, name: 'Editing Name', content: 'Editing content', tags: 'tagX,tagY' }`.
-- **Steps:**
-  1. Render `<PromptEditor onAddPrompt={mock} onEditPrompt={mock} editingPrompt={editingData} />`.
-  2. Check for "Edit Prompt" heading.
-  3. Verify initial values in inputs.
-  4. Update name to "Updated Name", content to "Updated content", tags to "tagUpdated".
-  5. Click the "Update" button.
-  6. Verify `onEditPrompt` was called with 3, "Updated Name", "Updated content", "tagUpdated".
-- **Expected Result:** "Edit Prompt" is displayed, inputs show initial values, and `onEditPrompt` is called with updated values.
-
-### 6.4 PromptList Component (`PromptList.test.js`)
-
-#### Test Case 1: Renders "No prompts found" When Prompts Array is Empty
-- **Description:** Confirms that an empty prompt list displays a "No prompts found" message.
-- **Preconditions:** All callbacks are mocked.
-- **Steps:**
-  1. Render `<PromptList prompts={[]} selectedPrompts={[]} onSelectPrompt={mock} onDeletePrompt={mock} onEditPromptClick={mock} />`.
-  2. Check for "No prompts found" text.
-- **Expected Result:** "No prompts found" is displayed.
-
-#### Test Case 2: Renders Prompt List and Checks Default States
-- **Description:** Verifies that prompts are rendered with correct details and unselected by default.
-- **Preconditions:** `prompts` is an array with two sample prompts; all callbacks are mocked.
-- **Steps:**
-  1. Render `<PromptList prompts={samplePrompts} selectedPrompts={[]} ... />`.
-  2. Check for prompt names and tags.
-  3. Verify all checkboxes are unchecked.
-- **Expected Result:** Prompt names and tags are displayed, and checkboxes are unchecked.
-
-#### Test Case 3: Selecting a Prompt Calls onSelectPrompt with its ID
-- **Description:** Ensures clicking a checkbox triggers the `onSelectPrompt` callback with the prompt's ID.
-- **Preconditions:** `prompts` is populated; all callbacks are mocked.
-- **Steps:**
-  1. Render `<PromptList prompts={samplePrompts} selectedPrompts={[]} ... />`.
-  2. Click the first prompt's checkbox.
-  3. Verify `onSelectPrompt` was called with ID 1.
-- **Expected Result:** `onSelectPrompt` is called with 1.
-
-#### Test Case 4: Delete Button Calls onDeletePrompt with Prompt ID
-- **Description:** Confirms clicking a delete button triggers `onDeletePrompt` with the correct ID.
-- **Preconditions:** `prompts` is populated; all callbacks are mocked.
-- **Steps:**
-  1. Render `<PromptList prompts={samplePrompts} selectedPrompts={[]} ... />`.
-  2. Click the first prompt's delete button.
-  3. Verify `onDeletePrompt` was called with ID 1.
-- **Expected Result:** `onDeletePrompt` is called with 1.
-
-#### Test Case 5: Edit Button Calls onEditPromptClick with Prompt Data
-- **Description:** Ensures clicking an edit button triggers `onEditPromptClick` with the prompt's data.
-- **Preconditions:** `prompts` is populated; all callbacks are mocked.
-- **Steps:**
-  1. Render `<PromptList prompts={samplePrompts} selectedPrompts={[]} ... />`.
-  2. Click the second prompt's edit button.
-  3. Verify `onEditPromptClick` was called with the second prompt's data.
-- **Expected Result:** `onEditPromptClick` is called with `{ id: 2, name: 'Prompt B', content: 'Content B', tags: 'work, personal' }`.
-
-### 6.5 SelectedPromptList Component (`SelectedPromptList.test.js`)
-
-#### Test Case 1: Shows "No prompts selected" Message When None Are Selected
-- **Description:** Verifies that an empty selection displays a "No prompts selected" message.
-- **Preconditions:** `selectedPrompts` is empty; `prompts` is populated; `onReorder` is mocked.
-- **Steps:**
-  1. Render `<SelectedPromptList selectedPrompts={[]} prompts={samplePrompts} onReorder={mock} />`.
-  2. Check for "No prompts selected" text.
-- **Expected Result:** "No prompts selected" is displayed.
-
-#### Test Case 2: Renders Selected Prompts in Provided Order
-- **Description:** Ensures selected prompts are rendered in the order specified by `selectedPrompts`.
-- **Preconditions:** `selectedPrompts` is `[33, 22]`; `prompts` is populated; `onReorder` is mocked.
-- **Steps:**
-  1. Render `<SelectedPromptList selectedPrompts={[33, 22]} prompts={samplePrompts} onReorder={mock} />`.
-  2. Check for "SP C" and "SP B" presence, and absence of "SP A".
-- **Expected Result:** "SP C" and "SP B" are displayed; "SP A" is not.
-
-### 6.6 SortablePrompt Component (`SortablePrompt.test.js`)
-
-#### Test Case 1: Displays Prompt Name and Content
-- **Description:** Confirms that the component renders the prompt's name and content.
-- **Preconditions:** `@dnd-kit/sortable` is mocked; `prompt` is `{ id: 123, name: 'Sortable Name', content: 'Sortable content' }`.
-- **Steps:**
-  1. Render `<SortablePrompt prompt={promptData} />`.
-  2. Check for "Sortable Name" and "Sortable content".
-- **Expected Result:** Both "Sortable Name" and "Sortable content" are displayed.
+  1. Create prompts with various tags
+  2. Visit the application
+  3. Enter partial tag "cod"
+  4. Verify prompts with tags starting with "cod" are shown
+  5. Enter partial tag "writ"
+  6. Verify prompts with tags starting with "writ" are shown
+  7. Test with very short partial match "co"
+- **Expected Result:** Tag filtering shows prompts where any tag starts with the entered text.
 
 ---
 

@@ -190,3 +190,139 @@ describe('Prompt Partner Integration - Prompt Workflows', () => {
   });
   */
 });
+
+describe('Prompt Partner Integration - Tag Filtering', () => {
+  const baseApiUrl = () => Cypress.env('apiUrl') || 'http://localhost:5001';
+
+  beforeEach(() => {
+    // Clear existing prompts
+    cy.request('GET', `${baseApiUrl()}/prompts`).then((response) => {
+      response.body.forEach((prompt) => {
+        cy.request('DELETE', `${baseApiUrl()}/prompts/${prompt.id}`);
+      });
+    });
+
+    // Create test prompts with different tags
+    cy.request('POST', `${baseApiUrl()}/prompts`, {
+      name: 'Coding Prompt',
+      content: 'Write a function',
+      tags: 'coding, javascript',
+    });
+
+    cy.request('POST', `${baseApiUrl()}/prompts`, {
+      name: 'Writing Prompt',
+      content: 'Write a story',
+      tags: 'writing, creative',
+    });
+
+    cy.request('POST', `${baseApiUrl()}/prompts`, {
+      name: 'Mixed Prompt',
+      content: 'Document your code',
+      tags: 'coding, writing',
+    });
+
+    cy.visit('http://localhost:3001');
+  });
+
+  it('Test Case 1: Basic Tag Filtering', () => {
+    // Initial state should show all prompts
+    cy.get('[data-testid="prompt-list"]')
+      .should('contain', 'Coding Prompt')
+      .and('contain', 'Writing Prompt')
+      .and('contain', 'Mixed Prompt');
+
+    // Filter by 'coding' tag
+    cy.get('input[placeholder*="Filter by tag"]').type('coding');
+    cy.get('[data-testid="prompt-list"]')
+      .should('contain', 'Coding Prompt')
+      .and('contain', 'Mixed Prompt')
+      .and('not.contain', 'Writing Prompt');
+
+    // Clear filter and verify all prompts are shown
+    cy.get('button').contains('Clear Filter').click();
+    cy.get('[data-testid="prompt-list"]')
+      .should('contain', 'Coding Prompt')
+      .and('contain', 'Writing Prompt')
+      .and('contain', 'Mixed Prompt');
+  });
+
+  it('Test Case 2: Non-existent Tag Handling', () => {
+    // Filter by non-existent tag
+    cy.get('input[placeholder*="Filter by tag"]').type('nonexistent');
+    cy.get('[data-testid="prompt-list"]')
+      .should('not.contain', 'Coding Prompt')
+      .and('not.contain', 'Writing Prompt')
+      .and('not.contain', 'Mixed Prompt')
+      .and('contain', 'No prompts found');
+
+    // Clear filter and verify recovery
+    cy.get('button').contains('Clear Filter').click();
+    cy.get('[data-testid="prompt-list"]')
+      .should('contain', 'Coding Prompt')
+      .and('contain', 'Writing Prompt')
+      .and('contain', 'Mixed Prompt');
+  });
+
+  it('Test Case 3: Filter State Persistence', () => {
+    // Set filter to 'coding'
+    cy.get('input[placeholder*="Filter by tag"]').type('coding');
+    
+    // Add new prompt with matching tag
+    cy.get('input[placeholder="Enter prompt name"]').type('New Coding Prompt');
+    cy.get('textarea[placeholder="Enter prompt content"]').type('New content');
+    cy.get('input[placeholder="Tags (comma-separated)"]').type('coding, test');
+    cy.get('button').contains('Add').click();
+
+    // Verify filter still works and shows new prompt
+    cy.get('[data-testid="prompt-list"]')
+      .should('contain', 'New Coding Prompt')
+      .and('contain', 'Coding Prompt')
+      .and('contain', 'Mixed Prompt')
+      .and('not.contain', 'Writing Prompt');
+  });
+
+  it('Test Case 4: Case-Insensitive Tag Filtering', () => {
+    // Test with uppercase filter
+    cy.get('input[placeholder*="Filter by tag"]').type('CODING');
+    cy.get('[data-testid="prompt-list"]')
+      .should('contain', 'Coding Prompt')
+      .and('contain', 'Mixed Prompt')
+      .and('not.contain', 'Writing Prompt');
+
+    // Test with mixed case filter
+    cy.get('input[placeholder*="Filter by tag"]').clear().type('WrItInG');
+    cy.get('[data-testid="prompt-list"]')
+      .should('contain', 'Writing Prompt')
+      .and('contain', 'Mixed Prompt')
+      .and('not.contain', 'Coding Prompt');
+  });
+
+  it('Test Case 5: Partial Tag Match Filtering', () => {
+    // Initial state should show all prompts
+    cy.get('[data-testid="prompt-list"]')
+      .should('contain', 'Coding Prompt')
+      .and('contain', 'Writing Prompt')
+      .and('contain', 'Mixed Prompt');
+
+    // Filter by partial tag 'cod'
+    cy.get('input[placeholder*="Filter by tag"]').type('cod');
+    cy.get('[data-testid="prompt-list"]')
+      .should('contain', 'Coding Prompt')
+      .and('contain', 'Mixed Prompt')
+      .and('not.contain', 'Writing Prompt');
+
+    // Filter by partial tag 'writ'
+    cy.get('input[placeholder*="Filter by tag"]').clear().type('writ');
+    cy.get('[data-testid="prompt-list"]')
+      .should('contain', 'Writing Prompt')
+      .and('contain', 'Mixed Prompt')
+      .and('not.contain', 'Coding Prompt');
+
+    // Test very short partial match 'co'
+    cy.get('input[placeholder*="Filter by tag"]').clear().type('co');
+    cy.get('[data-testid="prompt-list"]')
+      .should('contain', 'Coding Prompt')
+      .and('contain', 'Mixed Prompt')
+      .and('not.contain', 'Writing Prompt');
+  });
+});
