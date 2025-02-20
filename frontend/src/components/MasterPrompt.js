@@ -13,7 +13,6 @@
  * @notes
  * - Utilizes the Clipboard API for copying.
  * - Shows a toast notification on successful copy.
- * - Updated import for useToast to come from @chakra-ui/toast due to Chakra UI v2.x changes.
  */
 
 import React from 'react';
@@ -23,7 +22,7 @@ import {
   Textarea,
   Button,
 } from '@chakra-ui/react';
-import { useToast } from '@chakra-ui/toast'; // Updated import for toast functionality
+import { useToast } from '@chakra-ui/toast';
 
 const MasterPrompt = ({ selectedPromptsText }) => {
   const toast = useToast();
@@ -54,7 +53,15 @@ const MasterPrompt = ({ selectedPromptsText }) => {
         isReadOnly
         mb={2}
       />
-      <Button colorScheme="blue" onClick={handleCopy} isDisabled={!selectedPromptsText}>
+      {/*
+        Instead of `isDisabled`, use the standard HTML `disabled` attribute
+        so that our mocked <Button> in tests actually shows up as disabled.
+      */}
+      <Button
+        colorScheme="blue"
+        onClick={handleCopy}
+        disabled={!selectedPromptsText}
+      >
         Copy to Clipboard
       </Button>
     </Box>

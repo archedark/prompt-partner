@@ -8,9 +8,27 @@ Prompt Builder is a single-page web app for managing prompts. It allows users to
 
 ## Tech Stack
 
-- **Frontend:** React.js (via `create-react-app`)
-- **Backend:** Node.js, Express.js, SQLite (`sqlite3` or `better-sqlite3`)
-- **Deployment:** Frontend on Vercel or Netlify, Backend on Heroku
+- **Frontend:** 
+  - React.js (via `create-react-app`)
+  - Chakra UI for components and styling
+  - DND Kit for drag-and-drop functionality
+  - Emotion for styled components
+  - Framer Motion for animations
+- **Backend:** 
+  - Node.js with Express.js
+  - SQLite3 for database
+  - CORS for cross-origin requests
+  - Nodemon for development
+
+## Testing Stack
+- **Frontend:**
+  - Jest
+  - React Testing Library
+  - Coverage requirements: 70% for branches, functions, lines, and statements
+- **Backend:**
+  - Jest
+  - Supertest for API testing
+  - Coverage requirements: 70% for branches, functions, lines, and statements
 
 ## Project Structure
 
@@ -41,20 +59,23 @@ Prompt Builder is a single-page web app for managing prompts. It allows users to
 ### Frontend Rules
 
 - **Components:**
-  - `PromptList`: Display prompts with checkboxes for selection.
-  - `PromptEditor`: Form to add or edit prompts (text and tags).
-  - `MasterPrompt`: Show combined text of selected prompts with a copy button.
+  - Use Chakra UI components for consistent styling
+  - Implement drag-and-drop with @dnd-kit libraries
+  - Use Emotion/styled-components for custom styling when needed
+  - `PromptList`: Display prompts with checkboxes for selection
+  - `PromptEditor`: Form to add or edit prompts (text and tags)
+  - `MasterPrompt`: Show combined text of selected prompts with a copy button
 - **State Management:**
-  - Use `useState` for component state (e.g., selected prompts).
-  - Use `useEffect` to fetch prompts on mount.
-  - Optional: Use Context API for sharing prompts data across components.
+  - Use `useState` for component state (e.g., selected prompts)
+  - Use `useEffect` to fetch prompts on mount
+  - Optional: Use Context API for sharing prompts data across components
 - **API Interactions:**
   - Use `fetch` to call backend API endpoints.
   - Handle basic loading states; skip extensive error handling for MVP.
 - **UI:**
-  - Implement a single-page layout with prompt list, editor, and Master Prompt sections.
-  - Keep design minimal; use basic CSS, CSS modules, or inline styles.
-  - Use `navigator.clipboard.writeText` for copying the Master Prompt.
+  - Use Chakra UI's responsive layout components
+  - Implement animations with Framer Motion where appropriate
+  - Use toast notifications from @chakra-ui/toast for user feedback
 
 ### Backend Rules
 
