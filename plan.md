@@ -71,10 +71,10 @@
      - [X] Error handling
      - [X] Verify tests pass
 4. **Integration Testing**
-   - [ ] End-to-end workflows
-   - [ ] API response handling
-   - [ ] State management
-   - [ ] Ensure database is unaffected by tests
+   - [X] End-to-end workflows
+   - [X] API response handling
+   - [X] State management
+   - [ ] Use in-memory SQLite database for testing
    - [ ] Verify tests pass
 
 ## Additional Features
@@ -124,4 +124,4 @@
    - [X] Document code
 3. **Testing**
    - [X] Document testing strategy
-   - [ ] Document test cases
+   - [X] Document test cases
