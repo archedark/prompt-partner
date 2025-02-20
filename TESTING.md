@@ -81,44 +81,80 @@ The testing strategy is divided into three primary areas:
   #### Test Case 1: Full Prompt Creation Workflow
   - **Description:** Verify that adding a prompt via the UI successfully updates the backend and frontend state.
   - **Preconditions:** Empty prompt list, backend running with in-memory database.
-  - **Steps:** (TODO: Define steps for creating a prompt and checking results)
-  - **Expected Result:** (TODO: Define expected outcome)
+  - **Steps:**
+    1. Launch the application in a browser.
+    2. Navigate to the PromptEditor section.
+    3. Enter "Test Prompt" in the name field, "Test Content" in the content field, and "tag1" in the tags field.
+    4. Click the "Add" button.
+    5. Wait for the prompt to appear in the PromptList section.
+    6. Verify the prompt is stored in the backend by checking the database (via Cypress or API call).
+  - **Expected Result:** The new prompt "Test Prompt" with content "Test Content" and tags "tag1" appears in the PromptList, and the backend database contains the new prompt with a unique ID and correct `created_at` timestamp.
 
   #### Test Case 2: Prompt Editing Workflow
   - **Description:** Ensure editing a prompt updates the backend and reflects changes in the UI.
-  - **Preconditions:** At least one prompt exists in the database.
-  - **Steps:** (TODO: Define steps for editing a prompt)
-  - **Expected Result:** (TODO: Define expected outcome)
+  - **Preconditions:** At least one prompt exists in the database (e.g., ID 1, "Old Name", "Old Content", "oldtag").
+  - **Steps:**
+    1. Launch the application with the pre-existing prompt visible in PromptList.
+    2. Click the "Edit" button next to the prompt with ID 1.
+    3. In the PromptEditor, update the name to "New Name", content to "New Content", and tags to "newtag".
+    4. Click the "Update" button.
+    5. Wait for the PromptList to refresh.
+    6. Verify the backend database reflects the updated prompt.
+  - **Expected Result:** The PromptList shows the updated prompt with "New Name", "New Content", and "newtag", and the backend database reflects these changes for ID 1.
 
   #### Test Case 3: Prompt Deletion Workflow
   - **Description:** Confirm that deleting a prompt removes it from the backend and updates the UI.
-  - **Preconditions:** At least one prompt exists in the database.
-  - **Steps:** (TODO: Define steps for deleting a prompt)
-  - **Expected Result:** (TODO: Define expected outcome)
+  - **Preconditions:** At least one prompt exists in the database (e.g., ID 1, "Test Prompt", "Test Content", "tag1").
+  - **Steps:**
+    1. Launch the application with the pre-existing prompt in PromptList.
+    2. Click the "Delete" button next to the prompt with ID 1.
+    3. Wait for the PromptList to refresh.
+    4. Verify the prompt is no longer in the backend database.
+  - **Expected Result:** The prompt with ID 1 is removed from the PromptList, and the backend database no longer contains the prompt.
 
   #### Test Case 4: Master Prompt Generation and Copy
   - **Description:** Validate that selecting prompts, reordering them, and copying the master prompt works end-to-end.
-  - **Preconditions:** Multiple prompts exist in the database.
-  - **Steps:** (TODO: Define steps for selecting, reordering, and copying)
-  - **Expected Result:** (TODO: Define expected outcome)
+  - **Preconditions:** Multiple prompts exist in the database (e.g., ID 1: "Prompt A", ID 2: "Prompt B", ID 3: "Prompt C").
+  - **Steps:**
+    1. Launch the application with the prompts visible in PromptList.
+    2. Check the boxes for "Prompt A" and "Prompt B".
+    3. In SelectedPromptList, drag "Prompt B" above "Prompt A" to reorder them.
+    4. Verify the MasterPrompt textarea shows "Prompt B\nPrompt A".
+    5. Click the "Copy to Clipboard" button.
+    6. Check the clipboard contents (via Cypress).
+  - **Expected Result:** The MasterPrompt displays "Prompt B\nPrompt A" after reordering, and the clipboard contains the same text after copying.
 
   #### Test Case 5: API Error Handling - Invalid Creation
   - **Description:** Test that the frontend handles a backend error (e.g., missing content) during prompt creation.
-  - **Preconditions:** Backend configured to reject invalid requests.
-  - **Steps:** (TODO: Define steps for submitting an invalid prompt)
-  - **Expected Result:** (TODO: Define expected outcome)
+  - **Preconditions:** Backend configured to reject invalid requests (e.g., returns 400 for missing content).
+  - **Steps:**
+    1. Launch the application with an empty PromptList.
+    2. Navigate to PromptEditor.
+    3. Enter "Test Prompt" in the name field, leave the content field empty, and add "tag1" in the tags field.
+    4. Click the "Add" button.
+    5. Observe the frontend response (e.g., no new prompt added, optional error message).
+    6. Verify the backend database remains unchanged.
+  - **Expected Result:** No new prompt appears in PromptList, the backend database is unchanged, and the frontend optionally displays an error (e.g., via toast if implemented).
 
   #### Test Case 6: API Error Handling - Database Failure
   - **Description:** Ensure the frontend gracefully handles a backend database failure during retrieval.
-  - **Preconditions:** Backend configured to simulate database errors.
-  - **Steps:** (TODO: Define steps for triggering a database error)
-  - **Expected Result:** (TODO: Define expected outcome)
+  - **Preconditions:** Backend configured to simulate database errors (e.g., `GET /prompts` returns 500).
+  - **Steps:**
+    1. Launch the application with the backend set to fail on `GET /prompts`.
+    2. Observe the PromptList section on page load.
+    3. Verify no prompts are displayed or an error state is shown.
+  - **Expected Result:** PromptList shows "No prompts found" or an error message, and the application remains functional without crashing.
 
   #### Test Case 7: State Sync After Reordering
   - **Description:** Verify that reordering selected prompts in the UI updates the master prompt state consistently.
-  - **Preconditions:** Multiple prompts selected in the UI.
-  - **Steps:** (TODO: Define steps for reordering prompts)
-  - **Expected Result:** (TODO: Define expected outcome)
+  - **Preconditions:** Multiple prompts selected in the UI (e.g., ID 1: "Prompt A", ID 2: "Prompt B" selected).
+  - **Steps:**
+    1. Launch the application with "Prompt A" and "Prompt B" in PromptList.
+    2. Check the boxes for both prompts.
+    3. Verify MasterPrompt initially shows "Prompt A\nPrompt B".
+    4. In SelectedPromptList, drag "Prompt B" above "Prompt A".
+    5. Check the MasterPrompt textarea after reordering.
+  - **Expected Result:** MasterPrompt updates to "Prompt B\nPrompt A" after reordering, reflecting the new order in SelectedPromptList.
 
 ---
 

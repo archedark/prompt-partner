@@ -17,6 +17,7 @@
  * @notes
  * - Each prompt includes a checkbox, content, tags, Edit and Delete buttons.
  * - Added import for DeleteIcon and EditIcon from @chakra-ui/icons.
+ * - Added data-testid to Stack for Cypress targeting
  */
 
 import React from 'react';
@@ -44,7 +45,7 @@ const PromptList = ({
       <Heading as="h2" size="md" mb={3}>
         Prompts
       </Heading>
-      <Stack spacing={4} maxH="400px" overflowY="auto" pr={2}>
+      <Stack spacing={4} maxH="400px" overflowY="auto" pr={2} data-testid="prompt-list">
         {prompts.length === 0 && (
           <Text fontStyle="italic" color="gray.500">
             No prompts found. Add a new prompt.

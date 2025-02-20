@@ -25,7 +25,8 @@
     "test:coverage": "react-scripts test --coverage --watchAll=false",
     "test:ci": "react-scripts test --ci --passWithNoTests",
     "eject": "react-scripts eject",
-    "cypress:open": "cypress open"
+    "cypress:open": "cypress open",
+    "cypress:run": "cypress run"
   },
   "eslintConfig": {
     "extends": [
