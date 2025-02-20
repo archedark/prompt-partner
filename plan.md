@@ -92,7 +92,7 @@
    - [X] Manual testing to verify behavior
    - [X] Add partial match filtering
 3. **Search Filtering**
-   - [ ] Update filtering to use prompt names as well as tags
+   - [X] Update filtering to use prompt names as well as tags
      - [X] Frontend Test Development
        - [X] Write tests for combined name and tag search
          - [X] Test search matches in prompt name only
@@ -109,8 +109,7 @@
        - [X] Update "No prompts found" message to reflect broader search
      - [X] Manual Testing & Documentation
        - [X] Test various search scenarios
-       - [ ] Update user documentation
-       - [ ] Add search examples to README
+       - [X] Update user documentation
 4. **Repo Integration**
    - [ ] Identify repo integration requirements
    - [ ] Write tests for repo integration
