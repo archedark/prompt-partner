@@ -57,11 +57,18 @@ jobs:
         cd frontend && npm ci
         cd ../backend && npm ci
     
+    - name: Build Frontend
+      working-directory: frontend
+      run: npm run build
+        
     - name: Cypress Tests
       uses: cypress-io/github-action@v6
       with:
         working-directory: frontend
         spec: cypress/integration/promptWorkflows.spec.js
-        start: npm start & (cd ../backend && npm start)
+        start: |
+          npm run serve & 
+          cd ../backend && npm run start:ci
         wait-on: 'http://localhost:3001, http://localhost:5001/prompts'
-        wait-on-timeout: 120 
+        wait-on-timeout: 120
+        command: npm run cypress:run 
