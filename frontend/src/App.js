@@ -122,8 +122,8 @@ function App() {
    * @description Updates the tag filter state
    * @param {string} value - Filter input value
    */
-  const handleTagFilterChange = (value) => {
-    setTagFilter(value.trim().toLowerCase());
+  const handleTagFilterChange = (e) => {
+    setTagFilter(e.target.value);
   };
 
   /**
@@ -137,9 +137,13 @@ function App() {
   // Filter prompts based on tagFilter
   const filteredPrompts = tagFilter
     ? prompts.filter((prompt) => {
+        const searchTerm = tagFilter.toLowerCase();
+        // Search in name
+        if (prompt.name.toLowerCase().includes(searchTerm)) return true;
+        // Search in tags
         if (!prompt.tags) return false;
         const tags = prompt.tags.toLowerCase().split(',').map((tag) => tag.trim());
-        return tags.some(tag => tag.startsWith(tagFilter));
+        return tags.some(tag => tag.includes(searchTerm));
       })
     : prompts;
 
@@ -158,9 +162,9 @@ function App() {
       {/* Tag Filter Input */}
       <HStack mb={4}>
         <Input
-          placeholder="Filter by tag (e.g., coding)"
+          placeholder="Search by name or tag"
           value={tagFilter}
-          onChange={(e) => handleTagFilterChange(e.target.value)}
+          onChange={handleTagFilterChange}
           maxW="300px"
         />
         <Button

@@ -93,22 +93,22 @@
    - [X] Add partial match filtering
 3. **Search Filtering**
    - [ ] Update filtering to use prompt names as well as tags
-     - [ ] Frontend Test Development
-       - [ ] Write tests for combined name and tag search
-         - [ ] Test search matches in prompt name only
-         - [ ] Test search matches in tags only
-         - [ ] Test search matches in both name and tags
-         - [ ] Test case-insensitive matching
-         - [ ] Test partial word matching in both fields
-         - [ ] Test empty search returns all prompts
-         - [ ] Test special characters handling
-     - [ ] Frontend Implementation
-       - [ ] Update search input placeholder to indicate both name and tag search
-       - [ ] Modify filter logic to include prompt names
-       - [ ] Add visual indication of match type (name/tags/both)
-       - [ ] Update "No prompts found" message to reflect broader search
-     - [ ] Manual Testing & Documentation
-       - [ ] Test various search scenarios
+     - [X] Frontend Test Development
+       - [X] Write tests for combined name and tag search
+         - [X] Test search matches in prompt name only
+         - [X] Test search matches in tags only
+         - [X] Test search matches in both name and tags
+         - [X] Test case-insensitive matching
+         - [X] Test partial word matching in both fields
+         - [X] Test empty search returns all prompts
+         - [X] Test special characters handling
+     - [X] Frontend Implementation
+       - [X] Update search input placeholder to indicate both name and tag search
+       - [X] Modify filter logic to include prompt names
+       - [X] Add visual indication of match type (name/tags/both)
+       - [X] Update "No prompts found" message to reflect broader search
+     - [X] Manual Testing & Documentation
+       - [X] Test various search scenarios
        - [ ] Update user documentation
        - [ ] Add search examples to README
 4. **Repo Integration**
