@@ -66,7 +66,7 @@ The testing strategy is divided into three primary areas:
   - Test the complete API flow by chaining operations (create, retrieve, update, delete) using a temporary or in-memory test database.
 - **Approach:**
   - Set up a separate testing configuration to ensure tests do not interfere with production data.
-  - Run a sequence of API calls and verify the system’s behavior.
+  - Run a sequence of API calls and verify the system's behavior.
 
 ---
 
@@ -90,6 +90,167 @@ The testing strategy is divided into three primary areas:
 - **Continuous Integration:** Integrate with CI/CD pipelines (e.g., GitHub Actions) to run tests automatically on pushes or pull requests.
 - **Code Coverage:** Utilize tools like Istanbul/nyc to monitor code coverage.
 - **User Feedback:** Adapt and expand test cases based on real-world usage and reported issues.
+
+---
+
+## 6. Test Cases
+
+Below are the documented test cases for the frontend components based on existing unit tests in `frontend/src/components/__tests__/` and `frontend/src/App.test.js`. Backend test cases are not yet implemented.
+
+### 6.1 App Component (`App.test.js`)
+
+#### Test Case 1: Renders the Main Header
+- **Description:** Verifies that the "Prompt Partner" header is rendered on the screen.
+- **Preconditions:** 
+  - `getPrompts` API call is mocked to return an empty array
+  - All API mocks are cleared before each test
+- **Steps:**
+  1. Mock `getPrompts` to resolve with an empty array
+  2. Render the `<App />` component
+  3. Check for the presence of the "Prompt Partner" text
+- **Expected Result:** The header text "Prompt Partner" is found in the document
+
+#### Test Case 2: Fetches and Displays Prompts on Mount
+- **Description:** Ensures that prompts are fetched on component mount and displayed in the UI.
+- **Preconditions:** 
+  - `getPrompts` API call is mocked
+  - All API mocks are cleared before each test
+- **Steps:**
+  1. Mock `getPrompts` to resolve with a single prompt `{ id: 101, name: 'Test Prompt', content: 'Test Content' }`
+  2. Render the `<App />` component
+  3. Wait for the fetch to resolve using `waitFor`
+  4. Check for the presence of "Test Prompt" in the document
+  5. Verify that `getPrompts` was called exactly once
+- **Expected Result:** 
+  - "Test Prompt" is displayed in the document
+  - `getPrompts` is called exactly once
+
+### 6.2 MasterPrompt Component (`MasterPrompt.test.js`)
+
+#### Test Case 1: Renders the Combined Text in the Textarea
+- **Description:** Confirms that the `selectedPromptsText` prop is displayed in the textarea.
+- **Preconditions:** None.
+- **Steps:**
+  1. Render `<MasterPrompt selectedPromptsText="Example combined text" />`.
+  2. Check the textarea's value for "Example combined text".
+- **Expected Result:** The textarea displays "Example combined text".
+
+#### Test Case 2: Copy Button is Disabled if No Text is Present
+- **Description:** Verifies that the "Copy to Clipboard" button is disabled when `selectedPromptsText` is empty.
+- **Preconditions:** Clipboard API is mocked.
+- **Steps:**
+  1. Render `<MasterPrompt selectedPromptsText="" />`.
+  2. Check if the "Copy to Clipboard" button is disabled.
+- **Expected Result:** The button is disabled.
+
+#### Test Case 3: Clicking Copy Button Writes Text to Clipboard if Text is Present
+- **Description:** Ensures that clicking the copy button calls the clipboard API with the correct text when `selectedPromptsText` is non-empty.
+- **Preconditions:** Clipboard API is mocked.
+- **Steps:**
+  1. Render `<MasterPrompt selectedPromptsText="Some text" />`.
+  2. Verify the "Copy to Clipboard" button is not disabled.
+  3. Click the button.
+  4. Check if `navigator.clipboard.writeText` was called with "Some text".
+- **Expected Result:** Button is enabled, and `writeText` is called with "Some text".
+
+### 6.3 PromptEditor Component (`PromptEditor.test.js`)
+
+#### Test Case 1: Renders Add Prompt Form When editingPrompt is Null
+- **Description:** Verifies that the form renders in "add" mode and submits correctly when no prompt is being edited.
+- **Preconditions:** `onAddPrompt` and `onEditPrompt` are mocked.
+- **Steps:**
+  1. Render `<PromptEditor onAddPrompt={mock} onEditPrompt={mock} editingPrompt={null} />`.
+  2. Check for "Add Prompt" heading.
+  3. Fill name input with "New Prompt" and content textarea with "New content".
+  4. Click the "Add" button.
+  5. Verify `onAddPrompt` was called with "New Prompt", "New content", and empty tags.
+- **Expected Result:** "Add Prompt" is displayed, and `onAddPrompt` is called with correct arguments.
+
+#### Test Case 2: Renders Edit Prompt Form When editingPrompt is Provided
+- **Description:** Ensures the form renders in "edit" mode with pre-filled values and submits updates correctly.
+- **Preconditions:** `onAddPrompt` and `onEditPrompt` are mocked; `editingPrompt` is `{ id: 3, name: 'Editing Name', content: 'Editing content', tags: 'tagX,tagY' }`.
+- **Steps:**
+  1. Render `<PromptEditor onAddPrompt={mock} onEditPrompt={mock} editingPrompt={editingData} />`.
+  2. Check for "Edit Prompt" heading.
+  3. Verify initial values in inputs.
+  4. Update name to "Updated Name", content to "Updated content", tags to "tagUpdated".
+  5. Click the "Update" button.
+  6. Verify `onEditPrompt` was called with 3, "Updated Name", "Updated content", "tagUpdated".
+- **Expected Result:** "Edit Prompt" is displayed, inputs show initial values, and `onEditPrompt` is called with updated values.
+
+### 6.4 PromptList Component (`PromptList.test.js`)
+
+#### Test Case 1: Renders "No prompts found" When Prompts Array is Empty
+- **Description:** Confirms that an empty prompt list displays a "No prompts found" message.
+- **Preconditions:** All callbacks are mocked.
+- **Steps:**
+  1. Render `<PromptList prompts={[]} selectedPrompts={[]} onSelectPrompt={mock} onDeletePrompt={mock} onEditPromptClick={mock} />`.
+  2. Check for "No prompts found" text.
+- **Expected Result:** "No prompts found" is displayed.
+
+#### Test Case 2: Renders Prompt List and Checks Default States
+- **Description:** Verifies that prompts are rendered with correct details and unselected by default.
+- **Preconditions:** `prompts` is an array with two sample prompts; all callbacks are mocked.
+- **Steps:**
+  1. Render `<PromptList prompts={samplePrompts} selectedPrompts={[]} ... />`.
+  2. Check for prompt names and tags.
+  3. Verify all checkboxes are unchecked.
+- **Expected Result:** Prompt names and tags are displayed, and checkboxes are unchecked.
+
+#### Test Case 3: Selecting a Prompt Calls onSelectPrompt with its ID
+- **Description:** Ensures clicking a checkbox triggers the `onSelectPrompt` callback with the prompt's ID.
+- **Preconditions:** `prompts` is populated; all callbacks are mocked.
+- **Steps:**
+  1. Render `<PromptList prompts={samplePrompts} selectedPrompts={[]} ... />`.
+  2. Click the first prompt's checkbox.
+  3. Verify `onSelectPrompt` was called with ID 1.
+- **Expected Result:** `onSelectPrompt` is called with 1.
+
+#### Test Case 4: Delete Button Calls onDeletePrompt with Prompt ID
+- **Description:** Confirms clicking a delete button triggers `onDeletePrompt` with the correct ID.
+- **Preconditions:** `prompts` is populated; all callbacks are mocked.
+- **Steps:**
+  1. Render `<PromptList prompts={samplePrompts} selectedPrompts={[]} ... />`.
+  2. Click the first prompt's delete button.
+  3. Verify `onDeletePrompt` was called with ID 1.
+- **Expected Result:** `onDeletePrompt` is called with 1.
+
+#### Test Case 5: Edit Button Calls onEditPromptClick with Prompt Data
+- **Description:** Ensures clicking an edit button triggers `onEditPromptClick` with the prompt's data.
+- **Preconditions:** `prompts` is populated; all callbacks are mocked.
+- **Steps:**
+  1. Render `<PromptList prompts={samplePrompts} selectedPrompts={[]} ... />`.
+  2. Click the second prompt's edit button.
+  3. Verify `onEditPromptClick` was called with the second prompt's data.
+- **Expected Result:** `onEditPromptClick` is called with `{ id: 2, name: 'Prompt B', content: 'Content B', tags: 'work, personal' }`.
+
+### 6.5 SelectedPromptList Component (`SelectedPromptList.test.js`)
+
+#### Test Case 1: Shows "No prompts selected" Message When None Are Selected
+- **Description:** Verifies that an empty selection displays a "No prompts selected" message.
+- **Preconditions:** `selectedPrompts` is empty; `prompts` is populated; `onReorder` is mocked.
+- **Steps:**
+  1. Render `<SelectedPromptList selectedPrompts={[]} prompts={samplePrompts} onReorder={mock} />`.
+  2. Check for "No prompts selected" text.
+- **Expected Result:** "No prompts selected" is displayed.
+
+#### Test Case 2: Renders Selected Prompts in Provided Order
+- **Description:** Ensures selected prompts are rendered in the order specified by `selectedPrompts`.
+- **Preconditions:** `selectedPrompts` is `[33, 22]`; `prompts` is populated; `onReorder` is mocked.
+- **Steps:**
+  1. Render `<SelectedPromptList selectedPrompts={[33, 22]} prompts={samplePrompts} onReorder={mock} />`.
+  2. Check for "SP C" and "SP B" presence, and absence of "SP A".
+- **Expected Result:** "SP C" and "SP B" are displayed; "SP A" is not.
+
+### 6.6 SortablePrompt Component (`SortablePrompt.test.js`)
+
+#### Test Case 1: Displays Prompt Name and Content
+- **Description:** Confirms that the component renders the prompt's name and content.
+- **Preconditions:** `@dnd-kit/sortable` is mocked; `prompt` is `{ id: 123, name: 'Sortable Name', content: 'Sortable content' }`.
+- **Steps:**
+  1. Render `<SortablePrompt prompt={promptData} />`.
+  2. Check for "Sortable Name" and "Sortable content".
+- **Expected Result:** Both "Sortable Name" and "Sortable content" are displayed.
 
 ---
 
