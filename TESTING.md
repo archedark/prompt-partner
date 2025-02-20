@@ -64,9 +64,61 @@ The testing strategy is divided into three primary areas:
 ### 3.3 Integration Testing
 - **Objectives:**
   - Test the complete API flow by chaining operations (create, retrieve, update, delete) using a temporary or in-memory test database.
+  - Validate seamless integration between the frontend React application and backend API, ensuring end-to-end workflows function as expected.
+  - Confirm that state management in the frontend correctly reflects backend data updates.
 - **Approach:**
-  - Set up a separate testing configuration to ensure tests do not interfere with production data.
-  - Run a sequence of API calls and verify the system's behavior.
+  - Set up a separate testing configuration with an in-memory SQLite database to avoid data conflicts with the production environment.
+  - Use Cypress for end-to-end testing to simulate user interactions in a browser, interacting with both frontend and backend.
+  - Chain API calls and UI actions to verify data consistency across the full application stack.
+  - Validate error handling across frontend-backend interactions for robustness.
+- **Tools:**
+  - Cypress: For browser-based end-to-end testing of frontend-backend integration.
+  - Jest/Supertest: For API-level integration tests if needed outside of Cypress.
+  - SQLite in-memory: To provide a clean, isolated database for each test run.
+- **Test Cases:**
+  Below are placeholders for integration test cases to be implemented. These focus on end-to-end workflows, API response handling, and state management.
+
+  #### Test Case 1: Full Prompt Creation Workflow
+  - **Description:** Verify that adding a prompt via the UI successfully updates the backend and frontend state.
+  - **Preconditions:** Empty prompt list, backend running with in-memory database.
+  - **Steps:** (TODO: Define steps for creating a prompt and checking results)
+  - **Expected Result:** (TODO: Define expected outcome)
+
+  #### Test Case 2: Prompt Editing Workflow
+  - **Description:** Ensure editing a prompt updates the backend and reflects changes in the UI.
+  - **Preconditions:** At least one prompt exists in the database.
+  - **Steps:** (TODO: Define steps for editing a prompt)
+  - **Expected Result:** (TODO: Define expected outcome)
+
+  #### Test Case 3: Prompt Deletion Workflow
+  - **Description:** Confirm that deleting a prompt removes it from the backend and updates the UI.
+  - **Preconditions:** At least one prompt exists in the database.
+  - **Steps:** (TODO: Define steps for deleting a prompt)
+  - **Expected Result:** (TODO: Define expected outcome)
+
+  #### Test Case 4: Master Prompt Generation and Copy
+  - **Description:** Validate that selecting prompts, reordering them, and copying the master prompt works end-to-end.
+  - **Preconditions:** Multiple prompts exist in the database.
+  - **Steps:** (TODO: Define steps for selecting, reordering, and copying)
+  - **Expected Result:** (TODO: Define expected outcome)
+
+  #### Test Case 5: API Error Handling - Invalid Creation
+  - **Description:** Test that the frontend handles a backend error (e.g., missing content) during prompt creation.
+  - **Preconditions:** Backend configured to reject invalid requests.
+  - **Steps:** (TODO: Define steps for submitting an invalid prompt)
+  - **Expected Result:** (TODO: Define expected outcome)
+
+  #### Test Case 6: API Error Handling - Database Failure
+  - **Description:** Ensure the frontend gracefully handles a backend database failure during retrieval.
+  - **Preconditions:** Backend configured to simulate database errors.
+  - **Steps:** (TODO: Define steps for triggering a database error)
+  - **Expected Result:** (TODO: Define expected outcome)
+
+  #### Test Case 7: State Sync After Reordering
+  - **Description:** Verify that reordering selected prompts in the UI updates the master prompt state consistently.
+  - **Preconditions:** Multiple prompts selected in the UI.
+  - **Steps:** (TODO: Define steps for reordering prompts)
+  - **Expected Result:** (TODO: Define expected outcome)
 
 ---
 
