@@ -24,11 +24,11 @@ Prompt Builder is a single-page web app for managing prompts. It allows users to
 - **Frontend:**
   - Jest
   - React Testing Library
-  - Coverage requirements: 70% for branches, functions, lines, and statements
 - **Backend:**
   - Jest
   - Supertest for API testing
-  - Coverage requirements: 70% for branches, functions, lines, and statements
+- **Integration Tests:**
+  - Cypress for end-to-end testing
 
 ## Project Structure
 

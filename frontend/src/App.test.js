@@ -44,61 +44,139 @@ describe('<App />', () => {
     expect(api.getPrompts).toHaveBeenCalledTimes(1);
   });
 
-  test('filters prompts by tag', async () => {
+  test('filters prompts by name or tags', async () => {
     api.getPrompts.mockResolvedValueOnce([
-      { id: 1, name: 'Prompt 1', content: 'Content 1', tags: 'coding, ai' },
-      { id: 2, name: 'Prompt 2', content: 'Content 2', tags: 'writing' },
+      { id: 1, name: 'Coding Guide', content: 'Content 1', tags: 'tutorial, guide' },
+      { id: 2, name: 'Writing Tutorial', content: 'Content 2', tags: 'writing' },
+      { id: 3, name: 'Python Tips', content: 'Content 3', tags: 'coding, python' },
     ]);
     render(<App />);
     await waitFor(() => {
-      expect(screen.getByText(/Prompt 1/i)).toBeInTheDocument();
-      expect(screen.getByText(/Prompt 2/i)).toBeInTheDocument();
+      expect(screen.getByText(/Coding Guide/i)).toBeInTheDocument();
     });
 
-    const filterInput = screen.getByPlaceholderText(/Filter by tag/i);
-    fireEvent.change(filterInput, { target: { value: 'coding' } });
-    expect(screen.getByText(/Prompt 1/i)).toBeInTheDocument();
-    expect(screen.queryByText(/Prompt 2/i)).not.toBeInTheDocument();
+    const searchInput = screen.getByPlaceholderText(/Search by name or tag/i);
+
+    // Test name-only match
+    fireEvent.change(searchInput, { target: { value: 'writing' } });
+    expect(screen.getByText(/Writing Tutorial/i)).toBeInTheDocument();
+    expect(screen.queryByText(/Coding Guide/i)).not.toBeInTheDocument();
+    expect(screen.queryByText(/Python Tips/i)).not.toBeInTheDocument();
+
+    // Test tag-only match
+    fireEvent.change(searchInput, { target: { value: 'python' } });
+    expect(screen.getByText(/Python Tips/i)).toBeInTheDocument();
+    expect(screen.queryByText(/Writing Tutorial/i)).not.toBeInTheDocument();
+    expect(screen.queryByText(/Coding Guide/i)).not.toBeInTheDocument();
+
+    // Test match in both name and tags
+    fireEvent.change(searchInput, { target: { value: 'coding' } });
+    expect(screen.getByText(/Coding Guide/i)).toBeInTheDocument();
+    expect(screen.getByText(/Python Tips/i)).toBeInTheDocument();
+    expect(screen.queryByText(/Writing Tutorial/i)).not.toBeInTheDocument();
   });
 
-  test('clears tag filter', async () => {
+  test('search is case-insensitive', async () => {
     api.getPrompts.mockResolvedValueOnce([
-      { id: 1, name: 'Prompt 1', content: 'Content 1', tags: 'coding' },
-      { id: 2, name: 'Prompt 2', content: 'Content 2', tags: 'writing' },
+      { id: 1, name: 'Coding Guide', content: 'Content 1', tags: 'TUTORIAL' },
+      { id: 2, name: 'WRITING Tips', content: 'Content 2', tags: 'writing' },
     ]);
     render(<App />);
     await waitFor(() => {
-      expect(screen.getByText(/Prompt 1/i)).toBeInTheDocument();
+      expect(screen.getByText(/Coding Guide/i)).toBeInTheDocument();
     });
 
-    const filterInput = screen.getByPlaceholderText(/Filter by tag/i);
-    fireEvent.change(filterInput, { target: { value: 'coding' } });
-    expect(screen.queryByText(/Prompt 2/i)).not.toBeInTheDocument();
+    const searchInput = screen.getByPlaceholderText(/Search by name or tag/i);
 
-    const clearButton = screen.getByText(/Clear Filter/i);
-    fireEvent.click(clearButton);
-    await waitFor(() => {
-      expect(screen.getByText(/Prompt 2/i)).toBeInTheDocument();
-    });
-  });
-
-  test('filters prompts by partial tag match', async () => {
-    api.getPrompts.mockResolvedValueOnce([
-      { id: 1, name: 'Prompt 1', content: 'Content 1', tags: 'coding, ai' },
-      { id: 2, name: 'Prompt 2', content: 'Content 2', tags: 'writing' },
-      { id: 3, name: 'Prompt 3', content: 'Content 3', tags: 'code, testing' },
-    ]);
+    // Test uppercase search
+    fireEvent.change(searchInput, { target: { value: 'WRITING' } });
+    expect(screen.getByText(/WRITING Tips/i)).toBeInTheDocument();
     
+    // Test mixed case search
+    fireEvent.change(searchInput, { target: { value: 'TuToRiAl' } });
+    expect(screen.getByText(/Coding Guide/i)).toBeInTheDocument();
+  });
+
+  test('handles partial word matching', async () => {
+    api.getPrompts.mockResolvedValueOnce([
+      { id: 1, name: 'Coding Guide', content: 'Content 1', tags: 'tutorial' },
+      { id: 2, name: 'Writing Helper', content: 'Content 2', tags: 'write' },
+    ]);
     render(<App />);
     await waitFor(() => {
-      expect(screen.getByText(/Prompt 1/i)).toBeInTheDocument();
+      expect(screen.getByText(/Coding Guide/i)).toBeInTheDocument();
     });
 
-    const filterInput = screen.getByPlaceholderText(/Filter by tag/i);
-    fireEvent.change(filterInput, { target: { value: 'cod' } });
+    const searchInput = screen.getByPlaceholderText(/Search by name or tag/i);
 
-    expect(screen.getByText(/Prompt 1/i)).toBeInTheDocument(); // has 'coding'
-    expect(screen.getByText(/Prompt 3/i)).toBeInTheDocument(); // has 'code'
-    expect(screen.queryByText(/Prompt 2/i)).not.toBeInTheDocument(); // has 'writing'
+    // Test partial name match
+    fireEvent.change(searchInput, { target: { value: 'cod' } });
+    expect(screen.getByText(/Coding Guide/i)).toBeInTheDocument();
+    
+    // Test partial tag match
+    fireEvent.change(searchInput, { target: { value: 'writ' } });
+    expect(screen.getByText(/Writing Helper/i)).toBeInTheDocument();
+  });
+
+  test('handles special characters in search', async () => {
+    api.getPrompts.mockResolvedValueOnce([
+      { id: 1, name: 'C++ Guide', content: 'Content 1', tags: 'c++, programming' },
+      { id: 2, name: 'Regular Guide', content: 'Content 2', tags: 'reg-ex' },
+    ]);
+    render(<App />);
+    await waitFor(() => {
+      expect(screen.getByText(/C\+\+ Guide/i)).toBeInTheDocument();
+    });
+
+    const searchInput = screen.getByPlaceholderText(/Search by name or tag/i);
+
+    // Test special characters in name
+    fireEvent.change(searchInput, { target: { value: 'c++' } });
+    expect(screen.getByText(/C\+\+ Guide/i)).toBeInTheDocument();
+    
+    // Test special characters in tags
+    fireEvent.change(searchInput, { target: { value: 'reg-ex' } });
+    expect(screen.getByText(/Regular Guide/i)).toBeInTheDocument();
+  });
+
+  test('shows empty state message when no matches found', async () => {
+    api.getPrompts.mockResolvedValueOnce([
+      { id: 1, name: 'Coding Guide', content: 'Content 1', tags: 'tutorial' },
+    ]);
+    render(<App />);
+    await waitFor(() => {
+      expect(screen.getByText(/Coding Guide/i)).toBeInTheDocument();
+    });
+
+    const searchInput = screen.getByPlaceholderText(/Search by name or tag/i);
+    fireEvent.change(searchInput, { target: { value: 'nonexistent' } });
+    
+    expect(screen.getByText(/No prompts found/i)).toBeInTheDocument();
+    expect(screen.queryByText(/Coding Guide/i)).not.toBeInTheDocument();
+  });
+
+  test('clears search and shows all prompts', async () => {
+    api.getPrompts.mockResolvedValueOnce([
+      { id: 1, name: 'Coding Guide', content: 'Content 1', tags: 'tutorial' },
+      { id: 2, name: 'Writing Tips', content: 'Content 2', tags: 'writing' },
+    ]);
+    render(<App />);
+    await waitFor(() => {
+      expect(screen.getByText(/Coding Guide/i)).toBeInTheDocument();
+    });
+
+    const searchInput = screen.getByPlaceholderText(/Search by name or tag/i);
+    
+    // Apply filter
+    fireEvent.change(searchInput, { target: { value: 'coding' } });
+    expect(screen.queryByText(/Writing Tips/i)).not.toBeInTheDocument();
+    
+    // Clear filter
+    const clearButton = screen.getByText(/Clear/i);
+    fireEvent.click(clearButton);
+    
+    expect(screen.getByText(/Coding Guide/i)).toBeInTheDocument();
+    expect(screen.getByText(/Writing Tips/i)).toBeInTheDocument();
+    expect(searchInput.value).toBe('');
   });
 });

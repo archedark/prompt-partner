@@ -103,9 +103,6 @@ cd frontend
 # Run tests in watch mode (interactive)
 npm test
 
-# Run tests with coverage report
-npm test -- --coverage
-
 # Run specific test file
 npm test -- path/to/test/file.test.js
 
@@ -123,43 +120,9 @@ npm test
 # Run tests in watch mode
 npm run test:watch
 
-# Run tests with coverage report
-npm test -- --coverage
-
 # Run specific test file
 npm test -- path/to/test/file.test.js
 ```
-
-### Coverage Requirements
-Both frontend and backend tests must meet these coverage thresholds:
-- 70% branch coverage
-- 70% function coverage
-- 70% line coverage
-- 70% statement coverage
-
-To view detailed coverage reports:
-1. Run tests with coverage flag
-2. Open `coverage/lcov-report/index.html` in your browser (in either frontend or backend directory)
-
-### Manual Testing
-For manual testing of the application:
-1. Start both frontend and backend servers
-2. Test basic CRUD operations for prompts:
-   - Create new prompts with various tags
-   - Edit existing prompts
-   - Delete prompts
-   - Verify proper error handling
-3. Test prompt selection and combination:
-   - Select multiple prompts
-   - Verify correct order in master prompt
-   - Test clipboard copy functionality
-4. Test drag-and-drop reordering:
-   - Reorder prompts in the selected list
-   - Verify order persists after reordering
-5. Test tag functionality:
-   - Add/remove tags
-   - Filter by tags
-   - Verify case-insensitive matching
 
 For detailed testing documentation and test cases, see TESTING.md
 

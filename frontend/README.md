@@ -45,9 +45,6 @@ Launches the test runner in interactive watch mode. Available test commands:
 # Run all tests in watch mode
 npm test
 
-# Run tests with coverage report
-npm test -- --coverage
-
 # Run specific test file
 npm test -- path/to/test/file.test.js
 
@@ -61,18 +58,6 @@ npm test -- -u
 Test files are located in:
 - `src/components/__tests__/` - Component tests
 - `cypress/integration/` - Integration tests
-
-Coverage requirements:
-- 70% branch coverage
-- 70% function coverage
-- 70% line coverage
-- 70% statement coverage
-
-View coverage report by opening `coverage/lcov-report/index.html` in your browser after running tests with coverage flag.
-
-#### `npm run build`
-
-Builds the app for production to the `build` folder, optimizing for best performance.
 
 ## Project Structure
 
