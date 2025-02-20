@@ -85,25 +85,34 @@
    - [X] Implement drag-and-drop based on tests
    - [X] Manual testing to verify behavior
 2. **Tag Filtering**
+   - [ ] Identify tag filtering requirements
    - [ ] Write tests for tag filtering
-     - [ ] Test filter UI rendering
-     - [ ] Test filter application logic
-     - [ ] Test filtered results display
    - [ ] Implement tag filtering based on tests
    - [ ] Manual testing to verify behavior
 3. **Repo Integration**
+   - [ ] Identify repo integration requirements
    - [ ] Write tests for repo integration
-     - [ ] Test repo connection handling
-     - [ ] Test prompt sync operations
-     - [ ] Test error scenarios
    - [ ] Implement repo integration based on tests
    - [ ] Manual testing to verify behavior
 4. **Prompt History**
+   - [ ] Identify prompt history requirements
    - [ ] Write tests for prompt history
-     - [ ] Test history tracking logic
-     - [ ] Test history display components
-     - [ ] Test undo/redo operations
    - [ ] Implement prompt history based on tests
+   - [ ] Manual testing to verify behavior
+5. **Expandable Prompt List**
+   - [ ] Identify expandable prompt list requirements
+   - [ ] Write tests for expandable prompt list
+   - [ ] Implement expandable prompt list based on tests
+   - [ ] Manual testing to verify behavior
+6. **Display Token Count in Prompt List**
+   - [ ] Identify token count requirements
+   - [ ] Write tests for token count
+   - [ ] Implement token count based on tests
+   - [ ] Manual testing to verify behavior
+7. **Clear Selection Button**
+   - [ ] Identify clear selection button requirements
+   - [ ] Write tests for clear selection button
+   - [ ] Implement clear selection button based on tests
    - [ ] Manual testing to verify behavior
 
 ## Documentation
