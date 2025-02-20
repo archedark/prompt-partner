@@ -74,6 +74,7 @@
    - [ ] End-to-end workflows
    - [ ] API response handling
    - [ ] State management
+   - [ ] Ensure database is unaffected by tests
    - [ ] Verify tests pass
 
 ## Additional Features
