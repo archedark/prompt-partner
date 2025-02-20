@@ -58,12 +58,15 @@ jobs:
         cd ../backend && npm ci
     
     - name: Start Servers
+      shell: pwsh
       run: |
-        cd backend
-        start /b cmd /c npm start
-        cd ../frontend
-        start /b cmd /c npm start
-        timeout /t 30 /nobreak > nul
+        Push-Location backend
+        Start-Process -NoNewWindow npm -ArgumentList "start"
+        Pop-Location
+        Push-Location frontend
+        Start-Process -NoNewWindow npm -ArgumentList "start"
+        Pop-Location
+        Start-Sleep -Seconds 30
     
     - name: Run Integration Tests
       working-directory: ./frontend
