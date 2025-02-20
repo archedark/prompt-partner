@@ -1,6 +1,84 @@
 # Testing Strategy for Prompt Partner
 
-This document outlines the testing strategy for both the frontend React application and the backend API built with Node.js and SQLite. The goal is to ensure that both the user interface and API endpoints work reliably and meet the requirements for the MVP.
+## Quick Start - Running Tests
+
+### Frontend Tests
+```bash
+cd frontend
+
+# Install dependencies if not already done
+npm install
+
+# Run all tests in watch mode
+npm test
+
+# Run tests with coverage
+npm test -- --coverage
+
+# Run specific test file
+npm test -- src/components/__tests__/PromptList.test.js
+
+# Run tests in CI mode
+npm test -- --ci
+
+# Update snapshots
+npm test -- -u
+```
+
+### Backend Tests
+```bash
+cd backend
+
+# Install dependencies if not already done
+npm install
+
+# Run all tests
+npm test
+
+# Run tests in watch mode
+npm run test:watch
+
+# Run tests with coverage
+npm test -- --coverage
+
+# Run specific test file
+npm test -- src/__tests__/prompts.test.js
+```
+
+### Test Organization
+
+#### Frontend Test Structure
+```
+frontend/
+├── src/
+│   ├── __tests__/              # General utility and hook tests
+│   ├── components/
+│   │   └── __tests__/          # Component-specific tests
+│   └── integration/
+│       └── __tests__/          # Integration tests
+└── cypress/                     # E2E tests (if implemented)
+```
+
+#### Backend Test Structure
+```
+backend/
+├── __tests__/                  # Unit tests
+├── integration/                # Integration tests
+└── test/
+    ├── fixtures/              # Test data
+    └── helpers/               # Test utilities
+```
+
+### Coverage Reports
+After running tests with coverage:
+- Frontend coverage report: `frontend/coverage/lcov-report/index.html`
+- Backend coverage report: `backend/coverage/lcov-report/index.html`
+
+Required coverage thresholds (both frontend and backend):
+- 70% branch coverage
+- 70% function coverage
+- 70% line coverage
+- 70% statement coverage
 
 ---
 
