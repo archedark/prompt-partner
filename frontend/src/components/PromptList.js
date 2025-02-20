@@ -3,12 +3,12 @@
  * @description Displays a scrollable list of prompts with checkboxes, plus edit/delete buttons.
  *
  * @dependencies
- * - React
- * - Chakra UI (Box, Text, Checkbox, IconButton, Stack, Heading, Flex, Button)
- * - @chakra-ui/icons (DeleteIcon, EditIcon) for action buttons
+ * - React: For component rendering
+ * - Chakra UI (Box, Text, Checkbox, IconButton, Stack, Heading, Flex, Button): UI components
+ * - @chakra-ui/icons (DeleteIcon, EditIcon): Action button icons
  *
  * @props
- * - prompts: Array of prompt objects (id, content, tags, created_at)
+ * - prompts: Array of prompt objects (id, name, content, tags, created_at)
  * - selectedPrompts: Array of selected prompt IDs
  * - onSelectPrompt: Function to toggle prompt selection
  * - onDeletePrompt: Function to delete a prompt by ID
@@ -16,10 +16,9 @@
  *
  * @notes
  * - Each prompt includes a checkbox, content, tags, Edit and Delete buttons.
- * - Added import for DeleteIcon and EditIcon from @chakra-ui/icons.
- * - Added data-testid to Stack for Cypress targeting
+ * - Checkbox has a data-testid for Cypress targeting, avoiding overlap issues.
+ * - Added data-testid to Stack for broader Cypress targeting.
  */
-
 import React from 'react';
 import {
   Box,
@@ -31,7 +30,7 @@ import {
   Flex,
   Button,
 } from '@chakra-ui/react';
-import { DeleteIcon, EditIcon } from '@chakra-ui/icons'; // Added import for icons
+import { DeleteIcon, EditIcon } from '@chakra-ui/icons';
 
 const PromptList = ({
   prompts,
@@ -60,11 +59,15 @@ const PromptList = ({
             alignItems="center"
             justifyContent="space-between"
           >
-            <Checkbox
-              isChecked={selectedPrompts.includes(prompt.id)}
-              onChange={() => onSelectPrompt(prompt.id)}
-              mr={3}
-            />
+            {/* Wrap Checkbox in a Box for layout consistency */}
+            <Box position="relative" mr={3}>
+              <Checkbox
+                data-testid={`checkbox-${prompt.id}`} // Unique test ID for Cypress
+                isChecked={selectedPrompts.includes(prompt.id)}
+                onChange={() => onSelectPrompt(prompt.id)}
+                alignSelf="center" // Maintain vertical centering
+              />
+            </Box>
             <Box flex="1">
               <Text fontWeight="bold" noOfLines={1}>
                 {prompt.name}
@@ -109,11 +112,8 @@ const PromptList = ({
           mt={4}
           colorScheme="blue"
           onClick={() => {
-            // If we want a quick way to clear all selected prompts
-            // we can pass an empty array to onSelectPrompt
-            // but in this setup, clearing is managed in the parent.
-            // We'll do it inline here for convenience:
-            onSelectPrompt(null); // We'll just do something invalid to indicate no selection
+            // Placeholder for clearing selections; not implemented
+            onSelectPrompt(null);
           }}
           isDisabled
         >

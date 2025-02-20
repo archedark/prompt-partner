@@ -1,3 +1,24 @@
+/**
+ * @file SelectedPromptList.js
+ * @description Displays a list of selected prompts with drag-and-drop reordering functionality.
+ *
+ * @dependencies
+ * - React: For component rendering
+ * - @dnd-kit/core: For drag-and-drop context and sensors
+ * - @dnd-kit/sortable: For sortable list functionality
+ * - Chakra UI (Box, Heading, Text): UI components
+ * - SortablePrompt: Child component for individual draggable prompts
+ *
+ * @props
+ * - selectedPrompts: Array of selected prompt IDs
+ * - prompts: Array of all prompt objects
+ * - onReorder: Function to handle reordering of selected prompts
+ *
+ * @notes
+ * - Uses @dnd-kit for drag-and-drop with Pointer and Keyboard sensors.
+ * - Filters prompts to display only selected ones.
+ * - Added data-testid for Cypress visibility checks.
+ */
 import React from 'react';
 import {
   DndContext,
@@ -39,7 +60,7 @@ const SelectedPromptList = ({ selectedPrompts, prompts, onReorder }) => {
     .filter(Boolean);
 
   return (
-    <Box>
+    <Box data-testid="selected-prompts-order">
       <Heading as="h2" size="md" mb={3}>
         Selected Prompts Order
       </Heading>
@@ -67,4 +88,4 @@ const SelectedPromptList = ({ selectedPrompts, prompts, onReorder }) => {
   );
 };
 
-export default SelectedPromptList; 
+export default SelectedPromptList;

@@ -1,23 +1,39 @@
 /**
  * @file e2e.js
- * @description Global configuration file for Cypress end-to-end tests in Prompt Partner.
- *              Imports custom commands and sets up test environment behavior.
+ * @description Cypress global configuration and custom commands for end-to-end testing.
  *
  * @dependencies
- * - Cypress: For test framework functionality
+ * - Cypress: For test framework and command API
  *
  * @notes
- * - Imports commands.js for custom Cypress commands
- * - Minimal setup; can be extended for global hooks or error handling
- * - No TypeScript per project rules
+ * - Imports commands.js for additional custom commands (if any).
+ * - Defines a custom dragTo command for @dnd-kit drag-and-drop simulation.
+ * - Ensures proper event simulation for React and @dnd-kit compatibility.
  */
-
-// Import custom commands
 import './commands';
 
-// Global configuration (e.g., hooks) can be added here if needed
-// Example: Uncomment to log all uncaught exceptions
-// Cypress.on('uncaught:exception', (err, runnable) => {
-//   console.log(err);
-//   return false; // Prevent test failure on uncaught errors
-// });
+// Custom command to simulate drag-and-drop for @dnd-kit/sortable
+Cypress.Commands.add('dragTo', { prevSubject: 'element' }, (subject, targetSelector, options = {}) => {
+  const { xOffset = 0, yOffset = 0 } = options;
+
+  // Get the source element's coordinates
+  cy.wrap(subject).then(($source) => {
+    const sourceRect = $source[0].getBoundingClientRect();
+    const sourceX = sourceRect.left + sourceRect.width / 2;
+    const sourceY = sourceRect.top + sourceRect.height / 2;
+
+    // Get the target element's coordinates
+    cy.get(targetSelector).then(($target) => {
+      const targetRect = $target[0].getBoundingClientRect();
+      const targetX = targetRect.left + targetRect.width / 2 + xOffset;
+      const targetY = targetRect.top + targetRect.height / 2 + yOffset;
+
+      // Simulate drag: mousedown -> mousemove -> mouseup
+      cy.wrap($source)
+        .trigger('mousedown', { which: 1, pageX: sourceX, pageY: sourceY, force: true })
+        .trigger('mousemove', { pageX: sourceX, pageY: sourceY, force: true }) // Start drag
+        .trigger('mousemove', { pageX: targetX, pageY: targetY, force: true }) // Move to target
+        .trigger('mouseup', { pageX: targetX, pageY: targetY, force: true });
+    });
+  });
+});
