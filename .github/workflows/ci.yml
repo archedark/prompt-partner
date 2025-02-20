@@ -52,22 +52,12 @@ jobs:
           frontend/package-lock.json
           backend/package-lock.json
     
-    - name: Install Dependencies
-      run: |
-        cd frontend && npm ci
-        cd ../backend && npm ci
-    
-    - name: Start Servers
-      shell: pwsh
-      run: |
-        Push-Location backend
-        Start-Process -NoNewWindow npm -ArgumentList "start"
-        Pop-Location
-        Push-Location frontend
-        Start-Process -NoNewWindow npm -ArgumentList "start"
-        Pop-Location
-        Start-Sleep -Seconds 30
-    
-    - name: Run Integration Tests
-      working-directory: ./frontend
-      run: npm run cypress:run 
+    - name: Cypress Tests
+      uses: cypress-io/github-action@v6
+      with:
+        working-directory: frontend
+        start: |
+          npm start
+          cd ../backend && npm start
+        wait-on: 'http://localhost:3000, http://localhost:3001/prompts'
+        wait-on-timeout: 120 
