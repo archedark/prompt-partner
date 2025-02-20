@@ -1,5 +1,22 @@
+/**
+ * @file db.js
+ * @description Database connection and queries for Prompt Partner backend.
+ *              Now uses process.env.DB_PATH (default ./prompts.db).
+ *              Set DB_PATH=:memory: in test environments to enable in-memory SQLite.
+ *
+ * @dependencies
+ * - sqlite3
+ *
+ * @notes
+ * - By default, uses ./prompts.db.
+ * - If DB_PATH=:memory:, will use an in-memory DB (lost on process exit).
+ */
+
 const sqlite3 = require('sqlite3').verbose();
-const db = new sqlite3.Database('./prompts.db');
+
+// Respect DB_PATH from environment, or default to local prompts.db
+const DB_PATH = process.env.DB_PATH || './prompts.db';
+const db = new sqlite3.Database(DB_PATH);
 
 db.serialize(() => {
   db.run(`
@@ -14,9 +31,13 @@ db.serialize(() => {
 });
 
 const createPrompt = (name, content, tags, callback) => {
-  db.run('INSERT INTO prompts (name, content, tags) VALUES (?, ?, ?)', [name, content, tags], function(err) {
-    callback(err, this.lastID);
-  });
+  db.run(
+    'INSERT INTO prompts (name, content, tags) VALUES (?, ?, ?)',
+    [name, content, tags],
+    function (err) {
+      callback(err, this.lastID);
+    }
+  );
 };
 
 const getPrompts = (callback) => {
@@ -24,7 +45,11 @@ const getPrompts = (callback) => {
 };
 
 const updatePrompt = (id, name, content, tags, callback) => {
-  db.run('UPDATE prompts SET name = ?, content = ?, tags = ? WHERE id = ?', [name, content, tags, id], callback);
+  db.run(
+    'UPDATE prompts SET name = ?, content = ?, tags = ? WHERE id = ?',
+    [name, content, tags, id],
+    callback
+  );
 };
 
 const deletePrompt = (id, callback) => {

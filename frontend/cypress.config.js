@@ -8,10 +8,8 @@
  * - Cypress: End-to-end testing framework
  *
  * @notes
- * - Assumes frontend runs on http://localhost:3001 per README.md
- * - Uses JavaScript per project rules (no TypeScript)
- * - Configures for integration tests in cypress/integration/
- * - Minimal setup for MVP; can be extended for retries, screenshots, etc.
+ * - Default baseUrl is http://localhost:3001 for the frontend.
+ * - We'll allow overriding apiUrl via --env for the backend port.
  */
 
 const { defineConfig } = require('cypress');
@@ -22,14 +20,15 @@ module.exports = defineConfig({
     specPattern: 'cypress/integration/**/*.spec.js', // Match all .spec.js files in integration folder
     supportFile: 'cypress/support/e2e.js', // Custom support file
     env: {
-      apiUrl: 'http://localhost:5001', // Backend API URL from README.md for API checks
+      // Use a default if not overridden: typically http://localhost:5001
+      apiUrl: 'http://localhost:5001',
     },
     setupNodeEvents(on, config) {
       // Placeholder for custom event handlers (e.g., task plugins) if needed later
       return config;
     },
   },
-  // Disable video recording and screenshots for MVP simplicity
+  // Disable video recording and screenshots for simplicity
   video: false,
   screenshotOnRunFailure: false,
 });
