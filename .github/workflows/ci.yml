@@ -9,9 +9,15 @@ jobs:
     runs-on: windows-latest
     steps:
     - uses: actions/checkout@v3
-    - uses: actions/setup-node@v3
+    
+    - name: Use Node.js 18.x
+      uses: actions/setup-node@v3
       with:
         node-version: 18.x
+        cache: 'npm'
+        cache-dependency-path: |
+          frontend/package-lock.json
+          backend/package-lock.json
     
     - name: Install Frontend Dependencies
       working-directory: ./frontend
@@ -33,9 +39,15 @@ jobs:
     runs-on: windows-latest
     steps:
     - uses: actions/checkout@v3
-    - uses: actions/setup-node@v3
+    
+    - name: Use Node.js 18.x
+      uses: actions/setup-node@v3
       with:
         node-version: 18.x
+        cache: 'npm'
+        cache-dependency-path: |
+          frontend/package-lock.json
+          backend/package-lock.json
     
     - name: Install Dependencies
       run: |
