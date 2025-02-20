@@ -11,17 +11,20 @@
  * @notes
  * - Mocks onAddPrompt and onEditPrompt to verify correct calls
  * - Distinguishes between "Add Prompt" and "Edit Prompt" headings
+ * - Added cleanup to prevent state pollution
  */
 
 import React from 'react';
-import { render, screen, fireEvent } from '@testing-library/react';
+import { render, screen, fireEvent, cleanup } from '@testing-library/react';
 import PromptEditor from '../PromptEditor';
 
 describe('<PromptEditor />', () => {
   const mockOnAddPrompt = jest.fn();
   const mockOnEditPrompt = jest.fn();
 
-  beforeEach(() => {
+  // Cleanup after each test to prevent component state pollution
+  afterEach(() => {
+    cleanup();
     jest.clearAllMocks();
   });
 
