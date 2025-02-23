@@ -1,6 +1,6 @@
 /**
  * @file promptWorkflows.spec.js
- * @description Cypress integration tests for the Prompt Partner application.
+ * @description Cypress integration tests for the Promptner application.
  *              Tests are designed to be idempotent - using test-specific prefixes
  *              and cleaning up after themselves without affecting user data.
  *
@@ -13,7 +13,7 @@
  *     cross-env DB_PATH=:memory: PORT=5002 npx cypress run --env apiUrl=http://localhost:5002
  */
 
-describe('Prompt Partner Integration - Prompt Workflows', () => {
+describe('Promptner Integration - Prompt Workflows', () => {
   const baseApiUrl = () => Cypress.env('apiUrl') || 'http://localhost:5001';
   const TEST_PREFIX = '[TEST]';
 
@@ -116,33 +116,50 @@ describe('Prompt Partner Integration - Prompt Workflows', () => {
     });
   });
 
-  // You can uncomment and adjust the test below once you set up a reliable method
-  // for simulating drag-and-drop in your environment. It's partially implemented already.
-  /*
-  it('combines and copies multiple prompts', () => {
+  it('clears all selected prompts when clicking Clear Selections', () => {
+    // Create two test prompts
     cy.request('POST', `${baseApiUrl()}/prompts`, {
-      name: 'Prompt A',
-      content: 'Content A',
-      tags: 'tagA',
-    }).then((responseA) => {
-      expect(responseA.status).to.eq(201);
-      const idA = responseA.body.id;
+      name: `${TEST_PREFIX} Prompt 1`,
+      content: 'Content 1',
+      tags: 'test1',
+    }).then((response1) => {
+      const id1 = response1.body.id;
 
       cy.request('POST', `${baseApiUrl()}/prompts`, {
-        name: 'Prompt B',
-        content: 'Content B',
-        tags: 'tagB',
-      }).then((responseB) => {
-        expect(responseB.status).to.eq(201);
-        const idB = responseB.body.id;
+        name: `${TEST_PREFIX} Prompt 2`,
+        content: 'Content 2',
+        tags: 'test2',
+      }).then((response2) => {
+        const id2 = response2.body.id;
 
         cy.visit('http://localhost:3001');
-        // Check the boxes, reorder prompts, then copy to clipboard...
-        // ...
+
+        // Select both prompts and wait for state updates
+        cy.get(`[data-testid="checkbox-${id1}"] input[type="checkbox"]`, { timeout: 10000 })
+          .click({ force: true })
+          .should('be.checked');
+        
+        cy.get(`[data-testid="checkbox-${id2}"] input[type="checkbox"]`, { timeout: 10000 })
+          .click({ force: true })
+          .should('be.checked');
+
+        // Verify Master Prompt updates
+        cy.get('textarea[placeholder="Selected prompts will appear here..."]')
+          .should('have.value', 'Content 1\nContent 2');
+
+        // Verify Clear Selections button appears and click it
+        cy.get('button').contains('Clear Selections')
+          .should('be.visible')
+          .click();
+
+        // Verify all checkboxes are unchecked and Master Prompt is cleared
+        cy.get(`[data-testid="checkbox-${id1}"] input[type="checkbox"]`).should('not.be.checked');
+        cy.get(`[data-testid="checkbox-${id2}"] input[type="checkbox"]`).should('not.be.checked');
+        cy.get('textarea[placeholder="Selected prompts will appear here..."]')
+          .should('have.value', '');
       });
     });
   });
-  */
 
   it('handles invalid prompt creation gracefully', () => {
     cy.visit('http://localhost:3001');
@@ -172,17 +189,9 @@ describe('Prompt Partner Integration - Prompt Workflows', () => {
     // Verify error state is shown
     cy.get('[data-testid="prompt-list"]').should('contain', 'No prompts found');
   });
-
-  // Similarly, you can uncomment the next test once you have stable drag-and-drop
-  /*
-  it('maintains prompt order after reordering', () => {
-    cy.request('POST', `${baseApiUrl()}/prompts`, { ... });
-    // ...
-  });
-  */
 });
 
-describe('Prompt Partner Integration - Search and Filter', () => {
+describe('Promptner Integration - Search and Filter', () => {
   const baseApiUrl = () => Cypress.env('apiUrl') || 'http://localhost:5001';
   const TEST_PREFIX = '[TEST]';
 

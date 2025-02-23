@@ -1,6 +1,6 @@
 /**
  * @file PromptList.js
- * @description Displays a scrollable list of prompts with checkboxes, plus edit/delete buttons.
+ * @description Displays a scrollable list of prompts with checkboxes, plus edit/delete buttons and a clear selections option.
  *
  * @dependencies
  * - React: For component rendering
@@ -10,14 +10,16 @@
  * @props
  * - prompts: Array of prompt objects (id, name, content, tags, created_at)
  * - selectedPrompts: Array of selected prompt IDs
- * - onSelectPrompt: Function to toggle prompt selection
+ * - onSelectPrompt: Function to toggle prompt selection by ID
  * - onDeletePrompt: Function to delete a prompt by ID
  * - onEditPromptClick: Function to set the editingPrompt state in App
+ * - onClearSelections: Function to clear all selected prompts
  *
  * @notes
  * - Each prompt includes a checkbox, content, tags, Edit and Delete buttons.
  * - Checkbox has a data-testid for Cypress targeting, avoiding overlap issues.
  * - Added data-testid to Stack for broader Cypress targeting.
+ * - Clear Selections button is enabled when prompts are selected and triggers onClearSelections.
  */
 import React from 'react';
 import {
@@ -38,6 +40,7 @@ const PromptList = ({
   onSelectPrompt,
   onDeletePrompt,
   onEditPromptClick,
+  onClearSelections,
 }) => {
   return (
     <Box>
@@ -106,18 +109,14 @@ const PromptList = ({
           </Flex>
         ))}
       </Stack>
-      {/* Optional: Clear Selections Button */}
+      {/* Clear Selections Button */}
       {selectedPrompts.length > 0 && (
         <Button
           mt={4}
           colorScheme="blue"
-          onClick={() => {
-            // Placeholder for clearing selections; not implemented
-            onSelectPrompt(null);
-          }}
-          isDisabled
+          onClick={onClearSelections}
         >
-          Clear Selections (demo - not active)
+          Clear Selections
         </Button>
       )}
     </Box>

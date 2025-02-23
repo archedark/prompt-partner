@@ -1,8 +1,8 @@
 /**
  * @file PromptList.test.js
  * @description Unit tests for the <PromptList /> component. Ensures correct rendering
- *              of prompt entries, handling of checkbox selections, and triggers for
- *              edit and delete callbacks.
+ *              of prompt entries, handling of checkbox selections, triggers for
+ *              edit and delete callbacks, and behavior of the Clear Selection Button.
  *
  * @dependencies
  * - React
@@ -10,8 +10,9 @@
  * - PromptList (component under test)
  *
  * @notes
- * - Mocks callback props (onSelectPrompt, onDeletePrompt, onEditPromptClick) to verify calls
+ * - Mocks callback props (onSelectPrompt, onDeletePrompt, onEditPromptClick, onClearSelections) to verify calls
  * - Tests empty prompt list vs. populated list
+ * - Includes tests for Clear Selection Button visibility and functionality
  */
 
 import React from 'react';
@@ -22,6 +23,7 @@ describe('<PromptList />', () => {
   const mockOnSelectPrompt = jest.fn();
   const mockOnDeletePrompt = jest.fn();
   const mockOnEditPromptClick = jest.fn();
+  const mockOnClearSelections = jest.fn();
 
   const samplePrompts = [
     { id: 1, name: 'Prompt A', content: 'Content A', tags: 'tag1, tag2' },
@@ -124,6 +126,59 @@ describe('<PromptList />', () => {
       name: 'Prompt B',
       content: 'Content B',
       tags: 'work, personal',
+    });
+  });
+
+  describe('Clear Selection Button', () => {
+    test('shows clear selection button only when prompts are selected', () => {
+      // No selections
+      render(
+        <PromptList
+          prompts={samplePrompts}
+          selectedPrompts={[]}
+          onSelectPrompt={mockOnSelectPrompt}
+          onDeletePrompt={mockOnDeletePrompt}
+          onEditPromptClick={mockOnEditPromptClick}
+          onClearSelections={mockOnClearSelections}
+        />
+      );
+      expect(screen.queryByText(/Clear Selections/i)).not.toBeInTheDocument();
+
+      // With selections
+      render(
+        <PromptList
+          prompts={samplePrompts}
+          selectedPrompts={[1]}
+          onSelectPrompt={mockOnSelectPrompt}
+          onDeletePrompt={mockOnDeletePrompt}
+          onEditPromptClick={mockOnEditPromptClick}
+          onClearSelections={mockOnClearSelections}
+        />
+      );
+      expect(screen.getByText(/Clear Selections/i)).toBeInTheDocument();
+    });
+
+    test('clears all selected prompts when clicked', () => {
+      render(
+        <PromptList
+          prompts={samplePrompts}
+          selectedPrompts={[1, 2]}
+          onSelectPrompt={mockOnSelectPrompt}
+          onDeletePrompt={mockOnDeletePrompt}
+          onEditPromptClick={mockOnEditPromptClick}
+          onClearSelections={mockOnClearSelections}
+        />
+      );
+
+      const clearButton = screen.getByRole('button', { name: /Clear Selections/i });
+      expect(clearButton).toBeInTheDocument();
+
+      // Click the clear button
+      fireEvent.click(clearButton);
+      expect(mockOnClearSelections).toHaveBeenCalledTimes(1);
+
+      // Note: UI state (checkboxes unchecking) should be verified in integration tests,
+      // as unit tests don't re-render with updated props from parent state changes.
     });
   });
 });

@@ -1,5 +1,5 @@
 {
-  "name": "prompt-partner-frontend",
+  "name": "promptner-frontend",
   "version": "1.0.0",
   "private": true,
   "dependencies": {
@@ -21,9 +21,9 @@
   "scripts": {
     "start": "react-scripts start",
     "build": "react-scripts build",
-    "test": "react-scripts test",
-    "test:coverage": "react-scripts test --coverage --watchAll=false",
-    "test:ci": "react-scripts test --ci --passWithNoTests",
+    "test": "react-scripts test --silent",
+    "test:coverage": "react-scripts test --coverage --watchAll=false --silent",
+    "test:ci": "react-scripts test --ci --passWithNoTests --silent",
     "eject": "react-scripts eject",
     "cypress:open": "cypress open",
     "cypress:run": "cypress run"

@@ -1,6 +1,6 @@
-# Prompt Partner Frontend
+# Promptner Frontend
 
-The React frontend for Prompt Partner - a web application for managing and combining prompts.
+The React frontend for Promptner - a web application for managing and combining prompts.
 
 ## Features
 

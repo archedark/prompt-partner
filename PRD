@@ -1,15 +1,15 @@
-# Product Requirements Document (PRD): Prompt Builder Web Application
+# Product Requirements Document (PRD): Prompt Partner Web Application
 
-**Product Name**: Prompt Builder  
+**Product Name**: Promptner  
 **Version**: 1.0 (MVP)  
-**Date**: October 2023  
+**Date**: February 2025  
 
 ---
 
 ## 1. Introduction
 
 ### Purpose
-The Prompt Builder is a web-based tool designed to help you store, organize, and combine prompts efficiently. It includes a tagging system for categorization and allows you to select multiple prompts, merge them into a single "Master Prompt," and copy it to your clipboard—all with a focus on speed and simplicity.
+Promptner is a web-based tool designed to help you store, organize, and combine prompts efficiently. It includes a tagging system for categorization and allows you to select multiple prompts, merge them into a single "Master Prompt," and copy it to your clipboard—all with a focus on speed and simplicity.
 
 ### Target Audience
 You, the creator, are the primary user. This tool is built for personal use to streamline your prompt management process.
