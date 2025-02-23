@@ -119,8 +119,8 @@
 5. **Expandable Prompt List**
    - [X] Identify expandable prompt list requirements
    - [X] Write unit tests for expandable prompt list
-   - [ ] Implement expandable prompt list based on tests (then ensure no test failures)
-   - [ ] Manual testing to verify behavior
+   - [X] Implement expandable prompt list based on tests (then ensure no test failures)
+   - [X] Manual testing to verify behavior
    - [ ] Write integration tests for expandable prompt list
 6. **Repo Integration**
    - [ ] Identify repo integration requirements
