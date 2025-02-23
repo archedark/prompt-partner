@@ -20,7 +20,15 @@
  * - Checkbox has a data-testid for Cypress targeting, avoiding overlap issues.
  * - Added data-testid to Stack for broader Cypress targeting.
  * - Clear Selections button is enabled when prompts are selected and triggers onClearSelections.
+ * - Expandable Prompt List Requirements (to be implemented):
+ *   - Display: Checkbox, prompt text, tags, and an expand/collapse toggle button per prompt.
+ *   - Collapsed View: Shows first 2-3 lines of prompt text, truncated tag list (with '...' for more), and collapsed state indicator (e.g., ChevronDownIcon).
+ *   - Expanded View: Full prompt text (scrollable if long), complete tag list (comma-separated or as badges), metadata (e.g., created_at), and expanded state indicator (e.g., ChevronUpIcon).
+ *   - State Persistence: Store expanded/collapsed state in local storage to persist across sessions.
+ *   - Bulk Collapse: Add a 'Collapse All' button to collapse all prompts at once.
+ *   - Token Count: Display token count per prompt ( overlaps with feature 8; implement minimally here if needed).
  */
+
 import React from 'react';
 import {
   Box,
