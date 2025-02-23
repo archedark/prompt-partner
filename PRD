@@ -1,4 +1,4 @@
-# Product Requirements Document (PRD): Prompt Partner Web Application
+# Product Requirements Document (PRD): Promptner Web Application
 
 **Product Name**: Promptner  
 **Version**: 1.0 (MVP)  
@@ -34,6 +34,7 @@ The MVP will prioritize the following core functionalities:
 2. **Prompt List**
    - Display all prompts with checkboxes for selection.
    - Show tags alongside each prompt.
+   - Expandable/collapsible prompt entries to manage screen space efficiently.
 
 3. **Master Prompt Generation**
    - Combine selected prompts into a "Master Prompt."
@@ -55,9 +56,22 @@ The MVP will prioritize the following core functionalities:
 - List all prompts in a scrollable container.
 - Each prompt displays:
   - A checkbox for selection.
-  - The prompt text.
+  - The prompt text (truncated in collapsed view).
   - Associated tags.
+  - An expand/collapse toggle button.
+  - A token count.
 - Order prompts by creation date (newest first).
+- Expanded view shows:
+  - Full prompt text without truncation (with a scrollbar if necessary).
+  - Complete tag list with better formatting.
+  - Metadata (e.g., creation date, last modified).
+- Collapsed view shows:
+  - First 2-3 lines of prompt text.
+  - Truncated tag list with indicator for additional tags.
+  - Visual indicator for expanded/collapsed state.
+- State persistence:
+  - Remember expanded/collapsed state between sessions.
+  - Allow bulk collapse all prompts.
 
 ### 3.3 Master Prompt
 - Combine the text of all selected prompts (via checkboxes) in the order they appear in the list.
@@ -167,14 +181,18 @@ Here’s a step-by-step guide to get this done tonight:
 
 ## 8. Future Enhancements
 
-Defer these for post-MVP:
+Coming soon:
 - Drag-and-drop reordering of prompts.
-- Tag-based filtering.
-- AI integration (e.g., send Master Prompt to ChatGPT).
+- AI integration (e.g., send Master Prompt to LLM API).
 - Dark mode toggle.
+- Advanced search and filtering options.
+- Prompt version history.
+- Export/import functionality.
+- Keyboard shortcuts for common actions.
+- Repository integration (selecting files from a repository and using them as prompts).
 
 ---
 
 ## 9. Conclusion
 
-This PRD outlines a lean, functional Prompt Builder MVP that you can build and deploy tonight with AI assistance. It focuses on your core needs—prompt storage, tagging, and combination—while keeping the tech stack simple (React, Node.js, SQLite). Follow the development plan, leverage AI tools, and you’ll have a working app by morning. Let me know if you need help coding any specific part—happy building!
+This PRD outlines a lean, functional Prompt Builder MVP that you can build and deploy tonight with AI assistance. It focuses on your core needs—prompt storage, tagging, and combination—while keeping the tech stack simple (React, Node.js, SQLite). Follow the development plan, leverage AI tools, and you'll have a working app by morning. Let me know if you need help coding any specific part—happy building!

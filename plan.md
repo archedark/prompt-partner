@@ -115,25 +115,25 @@
    - [X] Write unit tests for clear selection button
    - [X] Implement clear selection button based on tests
    - [X] Manual testing to verify behavior
-   - [ ] Write integration tests for clear selection button
-5. **Repo Integration**
-   - [ ] Identify repo integration requirements
-   - [ ] Write tests for repo integration
-   - [ ] Implement repo integration based on tests
-   - [ ] Manual testing to verify behavior
-   - [ ] Write integration tests for repo integration
-6. **Prompt History**
-   - [ ] Identify prompt history requirements
-   - [ ] Write unit tests for prompt history
-   - [ ] Implement prompt history based on tests
-   - [ ] Manual testing to verify behavior
-   - [ ] Write integration tests for prompt history
-7. **Expandable Prompt List**
+   - [X] Write integration tests for clear selection button
+5. **Expandable Prompt List**
    - [ ] Identify expandable prompt list requirements
    - [ ] Write unit tests for expandable prompt list
    - [ ] Implement expandable prompt list based on tests
    - [ ] Manual testing to verify behavior
    - [ ] Write integration tests for expandable prompt list
+6. **Repo Integration**
+   - [ ] Identify repo integration requirements
+   - [ ] Write tests for repo integration
+   - [ ] Implement repo integration based on tests
+   - [ ] Manual testing to verify behavior
+   - [ ] Write integration tests for repo integration
+7. **Prompt History**
+   - [ ] Identify prompt history requirements
+   - [ ] Write unit tests for prompt history
+   - [ ] Implement prompt history based on tests
+   - [ ] Manual testing to verify behavior
+   - [ ] Write integration tests for prompt history
 8. **Display Token Count in Prompt List**
    - [ ] Identify token count requirements
    - [ ] Write unit tests for token count
