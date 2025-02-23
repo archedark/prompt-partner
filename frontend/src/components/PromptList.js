@@ -5,8 +5,8 @@
  *
  * @dependencies
  * - React: For component rendering
- * - Chakra UI (Box, Text, Checkbox, IconButton, Stack, Heading, Flex, Button): UI components
- * - @chakra-ui/icons (DeleteIcon, EditIcon, ChevronDownIcon, ChevronUpIcon): Action button icons
+ * - Chakra UI (Box, Text, Checkbox, IconButton, Stack, Heading, Flex, Button, useToast): UI components
+ * - @chakra-ui/icons (DeleteIcon, EditIcon, ChevronDownIcon, ChevronUpIcon, CopyIcon): Action button icons
  *
  * @props
  * - prompts: Array of prompt objects (id, name, content, tags, created_at)
@@ -43,8 +43,15 @@ import {
   Heading,
   Flex,
   Button,
+  useToast,
 } from '@chakra-ui/react';
-import { DeleteIcon, EditIcon, ChevronDownIcon, ChevronUpIcon } from '@chakra-ui/icons';
+import { 
+  DeleteIcon, 
+  EditIcon, 
+  ChevronDownIcon, 
+  ChevronUpIcon,
+  CopyIcon,
+} from '@chakra-ui/icons';
 
 const PromptList = ({
   prompts,
@@ -57,6 +64,27 @@ const PromptList = ({
   onToggleExpand,
   onCollapseAll,
 }) => {
+  const toast = useToast();
+
+  const handleCopyPrompt = async (content, name) => {
+    try {
+      await navigator.clipboard.writeText(content);
+      toast({
+        title: `Copied prompt: ${name}`,
+        status: "success",
+        duration: 2000,
+        isClosable: true,
+      });
+    } catch (err) {
+      toast({
+        title: "Failed to copy prompt",
+        status: "error",
+        duration: 2000,
+        isClosable: true,
+      });
+    }
+  };
+
   return (
     <Box>
       <Heading as="h2" size="md" mb={3}>
@@ -71,72 +99,98 @@ const PromptList = ({
         {prompts.map((prompt) => {
           const isExpanded = expandedStates[prompt.id] || false;
           return (
-            <Flex
+            <Box
               key={prompt.id}
               borderWidth="1px"
               borderRadius="md"
-              p={3}
-              alignItems="center"
-              justifyContent="space-between"
+              position="relative"
             >
-              {/* Checkbox */}
-              <Box position="relative" mr={3}>
-                <Checkbox
-                  data-testid={`checkbox-${prompt.id}`} // Unique test ID for Cypress
-                  isChecked={selectedPrompts.includes(prompt.id)}
-                  onChange={() => onSelectPrompt(prompt.id)}
-                  alignSelf="center" // Maintain vertical centering
-                />
-              </Box>
-              {/* Prompt Content */}
-              <Box flex="1">
-                <Text fontWeight="bold" noOfLines={1}>
-                  {prompt.name}
-                </Text>
-                <Text color="gray.600" noOfLines={isExpanded ? undefined : 2}>
-                  {prompt.content}
-                </Text>
-                {prompt.tags && (
-                  <Text color="gray.600" fontSize="sm" noOfLines={isExpanded ? undefined : 1}>
-                    Tags: {prompt.tags}
+              {/* Fixed Header with Actions */}
+              <Flex
+                p={3}
+                pb={2}
+                alignItems="center"
+                justifyContent="space-between"
+                borderBottomWidth={isExpanded ? "1px" : "0"}
+                borderBottomColor="gray.200"
+                bg="white"
+                borderTopRadius="md"
+                position="sticky"
+                top={0}
+                zIndex={1}
+              >
+                {/* Checkbox and Name */}
+                <Flex alignItems="center" flex="1">
+                  <Box mr={3}>
+                    <Checkbox
+                      data-testid={`checkbox-${prompt.id}`}
+                      isChecked={selectedPrompts.includes(prompt.id)}
+                      onChange={() => onSelectPrompt(prompt.id)}
+                    />
+                  </Box>
+                  <Text fontWeight="bold" noOfLines={1}>
+                    {prompt.name}
                   </Text>
-                )}
-                {isExpanded && (
-                  <Text color="gray.500" fontSize="xs">
-                    Created: {new Date(prompt.created_at).toLocaleString()}
-                  </Text>
-                )}
-              </Box>
-              {/* Actions */}
-              <Flex gap={2}>
-                <IconButton
-                  aria-label={isExpanded ? 'Collapse Prompt' : 'Expand Prompt'}
-                  icon={isExpanded ? <ChevronUpIcon /> : <ChevronDownIcon />}
-                  size="sm"
-                  onClick={() => onToggleExpand(prompt.id)}
-                />
-                <IconButton
-                  aria-label="Edit Prompt"
-                  icon={<EditIcon />}
-                  size="sm"
-                  onClick={() =>
-                    onEditPromptClick({
-                      id: prompt.id,
-                      name: prompt.name,
-                      content: prompt.content,
-                      tags: prompt.tags,
-                    })
-                  }
-                />
-                <IconButton
-                  aria-label="Delete Prompt"
-                  icon={<DeleteIcon />}
-                  size="sm"
-                  colorScheme="red"
-                  onClick={() => onDeletePrompt(prompt.id)}
-                />
+                </Flex>
+                {/* Actions */}
+                <Flex gap={2}>
+                  <IconButton
+                    aria-label={isExpanded ? 'Collapse Prompt' : 'Expand Prompt'}
+                    icon={isExpanded ? <ChevronUpIcon /> : <ChevronDownIcon />}
+                    size="sm"
+                    onClick={() => onToggleExpand(prompt.id)}
+                  />
+                  <IconButton
+                    aria-label="Copy Prompt"
+                    icon={<CopyIcon />}
+                    size="sm"
+                    onClick={() => handleCopyPrompt(prompt.content, prompt.name)}
+                  />
+                  <IconButton
+                    aria-label="Edit Prompt"
+                    icon={<EditIcon />}
+                    size="sm"
+                    onClick={() =>
+                      onEditPromptClick({
+                        id: prompt.id,
+                        name: prompt.name,
+                        content: prompt.content,
+                        tags: prompt.tags,
+                      })
+                    }
+                  />
+                  <IconButton
+                    aria-label="Delete Prompt"
+                    icon={<DeleteIcon />}
+                    size="sm"
+                    colorScheme="red"
+                    onClick={() => onDeletePrompt(prompt.id)}
+                  />
+                </Flex>
               </Flex>
-            </Flex>
+              {/* Scrollable Content */}
+              <Box p={3} pt={2}>
+                <Box 
+                  maxH={isExpanded ? "300px" : "auto"} 
+                  overflowY={isExpanded ? "auto" : "hidden"}
+                  pr={isExpanded ? 2 : 0} // Add padding for scrollbar
+                >
+                  <Text color="gray.600" noOfLines={isExpanded ? undefined : 2}>
+                    {prompt.content}
+                  </Text>
+                  {prompt.tags && (
+                    <Text color="gray.600" fontSize="sm" noOfLines={isExpanded ? undefined : 1}>
+                      Tags: {prompt.tags}
+                    </Text>
+                  )}
+                  {isExpanded && (
+                    <Text color="gray.500" fontSize="xs" mt={2}>
+                      Created: {new Date(prompt.created_at).toLocaleString()}
+                    </Text>
+                  )}
+                </Box>
+              </Box>
+            </Box>
           );
         })}
       </Stack>
