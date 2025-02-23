@@ -111,30 +111,35 @@
        - [X] Test various search scenarios
        - [X] Update user documentation
 4. **Clear Selection Button**
-   - [ ] Identify clear selection button requirements
-   - [ ] Write tests for clear selection button
+   - [X] Identify clear selection button requirements
+   - [X] Write unit tests for clear selection button
    - [ ] Implement clear selection button based on tests
    - [ ] Manual testing to verify behavior
+   - [ ] Write integration tests for clear selection button
 5. **Repo Integration**
    - [ ] Identify repo integration requirements
    - [ ] Write tests for repo integration
    - [ ] Implement repo integration based on tests
    - [ ] Manual testing to verify behavior
+   - [ ] Write integration tests for repo integration
 6. **Prompt History**
    - [ ] Identify prompt history requirements
-   - [ ] Write tests for prompt history
+   - [ ] Write unit tests for prompt history
    - [ ] Implement prompt history based on tests
    - [ ] Manual testing to verify behavior
+   - [ ] Write integration tests for prompt history
 7. **Expandable Prompt List**
    - [ ] Identify expandable prompt list requirements
-   - [ ] Write tests for expandable prompt list
+   - [ ] Write unit tests for expandable prompt list
    - [ ] Implement expandable prompt list based on tests
    - [ ] Manual testing to verify behavior
+   - [ ] Write integration tests for expandable prompt list
 8. **Display Token Count in Prompt List**
    - [ ] Identify token count requirements
-   - [ ] Write tests for token count
+   - [ ] Write unit tests for token count
    - [ ] Implement token count based on tests
    - [ ] Manual testing to verify behavior
+   - [ ] Write integration tests for token count
 
 ## Documentation
 1. **README**
