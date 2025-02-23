@@ -18,6 +18,7 @@
  * - Implements tag filtering with real-time updates
  * - Handles edge cases like empty prompt lists
  * - Manages expanded states for PromptList's expandable feature
+ * - Added error handling with toast notifications for prompt creation
  */
 
 import React, { useState, useEffect } from 'react';
@@ -29,6 +30,7 @@ import {
   Input,
   Button,
   HStack,
+  useToast,
 } from '@chakra-ui/react';
 import PromptList from './components/PromptList';
 import PromptEditor from './components/PromptEditor';
@@ -43,6 +45,7 @@ function App() {
   const [editingPrompt, setEditingPrompt] = useState(null);
   const [tagFilter, setTagFilter] = useState('');
   const [expandedStates, setExpandedStates] = useState({});
+  const toast = useToast();
 
   // Responsive layout: column on mobile, row on desktop
   const flexDirection = useBreakpointValue({ base: 'column', md: 'row' });
@@ -64,17 +67,32 @@ function App() {
    * @param {string} tags - Comma-separated tags
    */
   const handleAddPrompt = async (name, content, tags) => {
-    const newPromptId = await createPrompt(name, content, tags);
-    setPrompts([
-      {
+    try {
+      const newPromptId = await createPrompt(name, content, tags);
+      const newPrompt = {
         id: newPromptId,
         name,
         content,
         tags,
         created_at: new Date().toISOString(),
-      },
-      ...prompts,
-    ]);
+      };
+      setPrompts([newPrompt, ...prompts]);
+      toast({
+        title: 'Prompt Added',
+        description: `${name} has been successfully added.`,
+        status: 'success',
+        duration: 2000,
+        isClosable: true,
+      });
+    } catch (error) {
+      toast({
+        title: 'Error Adding Prompt',
+        description: error.message,
+        status: 'error',
+        duration: 3000,
+        isClosable: true,
+      });
+    }
   };
 
   /**

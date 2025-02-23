@@ -121,7 +121,7 @@
    - [X] Write unit tests for expandable prompt list
    - [X] Implement expandable prompt list based on tests (then ensure no test failures)
    - [X] Manual testing to verify behavior
-   - [ ] Write integration tests for expandable prompt list
+   - [X] Write integration tests for expandable prompt list
 6. **Repo Integration**
    - [ ] Identify repo integration requirements
    - [ ] Write tests for repo integration
