@@ -117,8 +117,8 @@
    - [X] Manual testing to verify behavior
    - [X] Write integration tests for clear selection button
 5. **Expandable Prompt List**
-   - [ ] Identify expandable prompt list requirements
-   - [ ] Write unit tests for expandable prompt list
+   - [X] Identify expandable prompt list requirements
+   - [X] Write unit tests for expandable prompt list
    - [ ] Implement expandable prompt list based on tests
    - [ ] Manual testing to verify behavior
    - [ ] Write integration tests for expandable prompt list
