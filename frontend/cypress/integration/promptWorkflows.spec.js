@@ -36,12 +36,17 @@ describe('Promptner Integration - Prompt Workflows', () => {
   beforeEach(cleanupTestPrompts);
   afterEach(() => {
     cleanupTestPrompts();
-    // Clear only visible, non-readonly text inputs and textareas
-    cy.get('input[type="text"]:not([readonly]), textarea:not([readonly]), input:not([type]):not([readonly])').each(($el) => {
-      if ($el.is(':visible')) {
-        cy.wrap($el).clear();
-      }
-    });
+    // Conditionally clear only visible, non-readonly text inputs and textareas if they exist
+    cy.get('input[type="text"]:not([readonly]), textarea:not([readonly]), input:not([type]):not([readonly])', { timeout: 1000 })
+      .then(($els) => {
+        if ($els.length > 0) {
+          $els.each((index, el) => {
+            if (Cypress.$(el).is(':visible')) {
+              cy.wrap(el).clear();
+            }
+          });
+        }
+      });
   });
 
   it('creates new prompt with name, content and tags', () => {
@@ -232,12 +237,17 @@ describe('Promptner Integration - Search and Filter', () => {
 
   afterEach(() => {
     cleanupTestPrompts();
-    // Clear only visible, non-readonly text inputs and textareas
-    cy.get('input[type="text"]:not([readonly]), textarea:not([readonly]), input:not([type]):not([readonly])').each(($el) => {
-      if ($el.is(':visible')) {
-        cy.wrap($el).clear();
-      }
-    });
+    // Conditionally clear only visible, non-readonly text inputs and textareas if they exist
+    cy.get('input[type="text"]:not([readonly]), textarea:not([readonly]), input:not([type]):not([readonly])', { timeout: 1000 })
+      .then(($els) => {
+        if ($els.length > 0) {
+          $els.each((index, el) => {
+            if (Cypress.$(el).is(':visible')) {
+              cy.wrap(el).clear();
+            }
+          });
+        }
+      });
   });
 
   it('searches by prompt name', () => {
@@ -352,5 +362,112 @@ describe('Promptner Integration - Search and Filter', () => {
     cy.get('[data-testid="prompt-list"]')
       .should('contain', `${TEST_PREFIX} Python Tips`)
       .and('not.contain', `${TEST_PREFIX} Writing Tutorial`);
+  });
+});
+
+describe('Promptner Integration - Expandable Prompt List', () => {
+  const baseApiUrl = () => Cypress.env('apiUrl') || 'http://localhost:5001';
+  const TEST_PREFIX = '[TEST]';
+
+  // Helper to clean up test prompts
+  const cleanupTestPrompts = () => {
+    cy.request('GET', `${baseApiUrl()}/prompts`).then((response) => {
+      const testPrompts = response.body.filter(p => p.name.startsWith(TEST_PREFIX));
+      testPrompts.forEach((prompt) => {
+        cy.request('DELETE', `${baseApiUrl()}/prompts/${prompt.id}`);
+      });
+    });
+  };
+
+  beforeEach(() => {
+    cleanupTestPrompts();
+
+    // Create a test prompt with multi-line content and multiple tags
+    cy.request('POST', `${baseApiUrl()}/prompts`, {
+      name: `${TEST_PREFIX} Long Prompt`,
+      content: 'Line 1\nLine 2\nLine 3\nLine 4',
+      tags: 'tag1, tag2, tag3, tag4',
+    });
+
+    cy.visit('http://localhost:3001');
+  });
+
+  afterEach(() => {
+    cleanupTestPrompts();
+    // Conditionally clear only visible, non-readonly text inputs and textareas if they exist
+    cy.get('input[type="text"]:not([readonly]), textarea:not([readonly]), input:not([type]):not([readonly])', { timeout: 1000 })
+      .then(($els) => {
+        if ($els.length > 0) {
+          $els.each((index, el) => {
+            if (Cypress.$(el).is(':visible')) {
+              cy.wrap(el).clear();
+            }
+          });
+        }
+      });
+  });
+
+  it('renders prompts in collapsed state by default', () => {
+    cy.get('[data-testid="prompt-list"]')
+      .contains(`${TEST_PREFIX} Long Prompt`)
+      .parents('[data-testid="prompt-list"] > div') // Find the prompt container
+      .within(() => {
+        // Verify partial content is visible
+        cy.contains('Line 1').should('be.visible');
+        cy.contains('Line 2').should('be.visible');
+        // Verify partial tags are visible
+        cy.contains('Tags: tag1, tag2').should('be.visible');
+        // Verify metadata (created date) is not visible
+        cy.contains('Created:').should('not.exist');
+        // Verify expand button is present indicating collapsed state
+        cy.get('button[aria-label="Expand Prompt"]').should('be.visible');
+      });
+  });
+
+  it('expands prompt to show full content, tags, and metadata', () => {
+    cy.get('[data-testid="prompt-list"]')
+      .contains(`${TEST_PREFIX} Long Prompt`)
+      .parents('[data-testid="prompt-list"] > div')
+      .within(() => {
+        cy.get('button[aria-label="Expand Prompt"]').click();
+        // Verify all content lines are visible
+        cy.contains('Line 1').should('be.visible');
+        cy.contains('Line 2').should('be.visible');
+        cy.contains('Line 3').should('be.visible');
+        cy.contains('Line 4').should('be.visible');
+        // Verify full tag list is visible
+        cy.contains('Tags: tag1, tag2, tag3, tag4').should('be.visible');
+        // Verify metadata is visible
+        cy.contains('Created:').should('be.visible');
+        // Verify collapse button is now present
+        cy.get('button[aria-label="Collapse Prompt"]').should('be.visible');
+      });
+  });
+
+  it('collapses all prompts when clicking Collapse All', () => {
+    cy.get('[data-testid="prompt-list"]')
+      .contains(`${TEST_PREFIX} Long Prompt`)
+      .parents('[data-testid="prompt-list"] > div')
+      .within(() => {
+        cy.get('button[aria-label="Expand Prompt"]').click();
+        cy.contains('Line 3').should('be.visible'); // Confirm expanded
+      });
+
+    cy.get('button').contains('Collapse All').click();
+
+    cy.get('[data-testid="prompt-list"]')
+      .contains(`${TEST_PREFIX} Long Prompt`)
+      .parents('[data-testid="prompt-list"] > div')
+      .within(() => {
+        // Verify partial content is visible
+        cy.contains('Line 1').should('be.visible');
+        cy.contains('Line 2').should('be.visible');
+        // Verify partial tags are visible
+        cy.contains('Tags: tag1, tag2').should('be.visible');
+        // Verify metadata is not visible
+        cy.contains('Created:').should('not.exist');
+        // Verify expand button is present indicating collapsed state
+        cy.get('button[aria-label="Expand Prompt"]').should('be.visible');
+      });
   });
 });

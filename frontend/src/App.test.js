@@ -30,7 +30,7 @@ describe('<App />', () => {
   test('renders the main header', async () => {
     api.getPrompts.mockResolvedValueOnce([]);
     render(<App />);
-    expect(screen.getByText(/Prompt Partner/i)).toBeInTheDocument();
+    expect(screen.getByText(/Promptner/i)).toBeInTheDocument();
   });
 
   test('fetches and displays prompts on mount', async () => {

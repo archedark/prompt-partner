@@ -4,8 +4,9 @@
  *
  * @dependencies
  * - React
- * - Chakra UI (Box, Heading, Textarea, Button)
+ * - Chakra UI (Box, Heading, Textarea, Button, Badge, HStack, Tooltip)
  * - @chakra-ui/toast (useToast) for toast notifications
+ * - gpt-tokenizer: For accurate GPT token counting
  *
  * @props
  * - selectedPromptsText: String containing the combined content of all selected prompts
@@ -13,6 +14,7 @@
  * @notes
  * - Utilizes the Clipboard API for copying.
  * - Shows a toast notification on successful copy.
+ * - Uses GPT-3 tokenizer for accurate token counts.
  */
 
 import React from 'react';
@@ -21,11 +23,17 @@ import {
   Heading,
   Textarea,
   Button,
+  Badge,
+  HStack,
+  Tooltip,
 } from '@chakra-ui/react';
 import { useToast } from '@chakra-ui/toast';
+import { countTokens, getTokenColorScheme, DEFAULT_MAX_TOKENS } from '../utils/tokenizer';
 
 const MasterPrompt = ({ selectedPromptsText }) => {
   const toast = useToast();
+  const tokenCount = countTokens(selectedPromptsText);
+  const colorScheme = getTokenColorScheme(tokenCount);
 
   /**
    * @function handleCopy
@@ -53,17 +61,27 @@ const MasterPrompt = ({ selectedPromptsText }) => {
         isReadOnly
         mb={2}
       />
-      {/*
-        Instead of `isDisabled`, use the standard HTML `disabled` attribute
-        so that our mocked <Button> in tests actually shows up as disabled.
-      */}
-      <Button
-        colorScheme="blue"
-        onClick={handleCopy}
-        disabled={!selectedPromptsText}
-      >
-        Copy to Clipboard
-      </Button>
+      <HStack spacing={2}>
+        <Button
+          colorScheme="blue"
+          onClick={handleCopy}
+          disabled={!selectedPromptsText}
+        >
+          Copy to Clipboard
+        </Button>
+        <Tooltip 
+          label={`${((tokenCount / DEFAULT_MAX_TOKENS) * 100).toFixed(1)}% of maximum ${DEFAULT_MAX_TOKENS.toLocaleString()} tokens`}
+          placement="top"
+        >
+          <Badge 
+            colorScheme={colorScheme}
+            variant="subtle" 
+            fontSize="md"
+          >
+            {tokenCount.toLocaleString()} tokens
+          </Badge>
+        </Tooltip>
+      </HStack>
     </Box>
   );
 };

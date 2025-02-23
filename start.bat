@@ -3,65 +3,64 @@ title Promptner Startup Script
 
 setlocal enabledelayedexpansion
 
-:: Set color codes
-set "GREEN=[32m"
-set "RED=[31m"
-set "YELLOW=[33m"
-set "NC=[0m"
+:: Create a log file
+set "LOGFILE=startup.log"
+echo Starting Promptner at %date% %time% > %LOGFILE%
 
-:: Check for Node.js
-echo Checking Node.js installation...
-node -v > nul 2>&1
-if errorlevel 1 (
-    echo %RED%Node.js is not installed. Please install Node.js and try again.%NC%
-    pause
-    exit /b 1
-)
-
-:: Check for npm
-echo Checking npm installation...
-npm -v > nul 2>&1
-if errorlevel 1 (
-    echo %RED%npm is not installed. Please install npm and try again.%NC%
-    pause
-    exit /b 1
-)
-
-:: Check if ports are available
+:: Check and clear ports if needed
 echo Checking port availability...
 
-:: Check port 3001 (frontend)
-netstat -ano | findstr :3001 > nul
-if not errorlevel 1 (
-    echo %RED%Port 3001 is already in use. Please free up the port and try again.%NC%
-    pause
-    exit /b 1
+:: Clear port 3001 (frontend) if in use
+for /f "tokens=5" %%a in ('netstat -ano ^| findstr :3001') do (
+    echo Killing process on port 3001 (PID: %%a) >> %LOGFILE%
+    taskkill /F /PID %%a > nul 2>&1
 )
 
-:: Check port 5001 (backend)
-netstat -ano | findstr :5001 > nul
-if not errorlevel 1 (
-    echo %RED%Port 5001 is already in use. Please free up the port and try again.%NC%
-    pause
-    exit /b 1
+:: Clear port 5001 (backend) if in use
+for /f "tokens=5" %%a in ('netstat -ano ^| findstr :5001') do (
+    echo Killing process on port 5001 (PID: %%a) >> %LOGFILE%
+    taskkill /F /PID %%a > nul 2>&1
 )
 
-echo %GREEN%Starting Promptner servers...%NC%
+echo Starting Promptner servers...
 
 :: Start backend server
-echo %YELLOW%Starting backend server...%NC%
-start "Promptner Backend" cmd /k "cd backend && echo Installing backend dependencies... && npm install && echo Starting backend server... && npm start"
+echo Starting backend server...
+cd backend
+echo Installing backend dependencies... >> %LOGFILE%
+call npm install >> %LOGFILE% 2>&1
+if errorlevel 1 (
+    echo Failed to install backend dependencies. Check %LOGFILE% for details.
+    cd ..
+    pause
+    exit /b 1
+)
+echo Starting backend server... >> %LOGFILE%
+start "Promptner Backend" cmd /k "npm start >> %LOGFILE% 2>&1"
+cd ..
 
 :: Wait a moment before starting frontend
 timeout /t 5 /nobreak > nul
 
 :: Start frontend server
-echo %YELLOW%Starting frontend server...%NC%
-start "Promptner Frontend" cmd /k "cd frontend && echo Installing frontend dependencies... && npm install && echo Starting frontend server... && npm start"
+echo Starting frontend server...
+cd frontend
+echo Installing frontend dependencies... >> %LOGFILE%
+call npm install >> %LOGFILE% 2>&1
+if errorlevel 1 (
+    echo Failed to install frontend dependencies. Check %LOGFILE% for details.
+    cd ..
+    pause
+    exit /b 1
+)
+echo Starting frontend server... >> %LOGFILE%
+start "Promptner Frontend" cmd /k "npm start >> %LOGFILE% 2>&1"
+cd ..
 
-echo %GREEN%Servers are starting. Please wait...%NC%
-echo %YELLOW%Frontend will be available at http://localhost:3001%NC%
-echo %YELLOW%Backend will be available at http://localhost:5001%NC%
+echo Servers are starting. Please wait...
+echo Frontend will be available at http://localhost:3001
+echo Backend will be available at http://localhost:5001
+echo Check %LOGFILE% for detailed logs if you encounter any issues.
 
 :: Keep the window open
 pause 

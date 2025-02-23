@@ -17,6 +17,7 @@
  * - Uses responsive layout with Chakra's useBreakpointValue
  * - Implements tag filtering with real-time updates
  * - Handles edge cases like empty prompt lists
+ * - Manages expanded states for PromptList's expandable feature
  */
 
 import React, { useState, useEffect } from 'react';
@@ -41,6 +42,7 @@ function App() {
   const [selectedPromptOrder, setSelectedPromptOrder] = useState([]);
   const [editingPrompt, setEditingPrompt] = useState(null);
   const [tagFilter, setTagFilter] = useState('');
+  const [expandedStates, setExpandedStates] = useState({});
 
   // Responsive layout: column on mobile, row on desktop
   const flexDirection = useBreakpointValue({ base: 'column', md: 'row' });
@@ -100,6 +102,11 @@ function App() {
     await deletePrompt(id);
     setPrompts(prompts.filter((p) => p.id !== id));
     setSelectedPrompts(selectedPrompts.filter((pid) => pid !== id));
+    setExpandedStates((prev) => {
+      const newState = { ...prev };
+      delete newState[id];
+      return newState;
+    });
   };
 
   /**
@@ -143,6 +150,26 @@ function App() {
     setTagFilter('');
   };
 
+  /**
+   * @function handleToggleExpand
+   * @description Toggles the expanded state of a prompt
+   * @param {number} id - Prompt ID
+   */
+  const handleToggleExpand = (id) => {
+    setExpandedStates((prev) => ({
+      ...prev,
+      [id]: !prev[id],
+    }));
+  };
+
+  /**
+   * @function handleCollapseAll
+   * @description Collapses all prompts by resetting expanded states
+   */
+  const handleCollapseAll = () => {
+    setExpandedStates({});
+  };
+
   // Filter prompts based on tagFilter
   const filteredPrompts = tagFilter
     ? prompts.filter((prompt) => {
@@ -152,7 +179,7 @@ function App() {
         // Search in tags
         if (!prompt.tags) return false;
         const tags = prompt.tags.toLowerCase().split(',').map((tag) => tag.trim());
-        return tags.some(tag => tag.includes(searchTerm));
+        return tags.some((tag) => tag.includes(searchTerm));
       })
     : prompts;
 
@@ -167,7 +194,7 @@ function App() {
       <Heading as="h1" size="xl" mb={4} textAlign="center">
         Promptner
       </Heading>
-      
+
       {/* Tag Filter Input */}
       <HStack mb={4}>
         <Input
@@ -195,6 +222,9 @@ function App() {
             onDeletePrompt={handleDeletePrompt}
             onEditPromptClick={setEditingPrompt}
             onClearSelections={handleClearSelections}
+            expandedStates={expandedStates}
+            onToggleExpand={handleToggleExpand}
+            onCollapseAll={handleCollapseAll}
           />
         </Box>
 
