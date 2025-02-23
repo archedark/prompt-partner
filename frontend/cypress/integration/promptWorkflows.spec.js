@@ -1,6 +1,6 @@
 /**
  * @file promptWorkflows.spec.js
- * @description Cypress integration tests for the Prompt Partner application.
+ * @description Cypress integration tests for the Promptner application.
  *              Tests are designed to be idempotent - using test-specific prefixes
  *              and cleaning up after themselves without affecting user data.
  *
@@ -13,7 +13,7 @@
  *     cross-env DB_PATH=:memory: PORT=5002 npx cypress run --env apiUrl=http://localhost:5002
  */
 
-describe('Prompt Partner Integration - Prompt Workflows', () => {
+describe('Promptner Integration - Prompt Workflows', () => {
   const baseApiUrl = () => Cypress.env('apiUrl') || 'http://localhost:5001';
   const TEST_PREFIX = '[TEST]';
 
@@ -191,7 +191,7 @@ describe('Prompt Partner Integration - Prompt Workflows', () => {
   });
 });
 
-describe('Prompt Partner Integration - Search and Filter', () => {
+describe('Promptner Integration - Search and Filter', () => {
   const baseApiUrl = () => Cypress.env('apiUrl') || 'http://localhost:5001';
   const TEST_PREFIX = '[TEST]';
 

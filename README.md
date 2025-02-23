@@ -1,4 +1,4 @@
-# Prompt Partner
+# Promptner
 
 A web application for managing and combining AI prompts. Create, edit, and combine prompts with tags to build powerful master prompts for your AI interactions.
 

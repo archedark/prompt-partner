@@ -1,6 +1,6 @@
 /**
  * @file App.js
- * @description Main application component for Prompt Partner. Manages state for prompts,
+ * @description Main application component for Promptner. Manages state for prompts,
  *              handles CRUD operations, and renders the UI layout with tag filtering.
  *
  * @dependencies
@@ -165,7 +165,7 @@ function App() {
   return (
     <Box p={4}>
       <Heading as="h1" size="xl" mb={4} textAlign="center">
-        Prompt Partner
+        Promptner
       </Heading>
       
       {/* Tag Filter Input */}

@@ -1,75 +1,67 @@
 @echo off
-title Prompt Partner Startup Script
+title Promptner Startup Script
 
-:: Check if Node.js is installed
-where node >nul 2>nul
-if %ERRORLEVEL% NEQ 0 (
-    echo Error: Node.js is not installed or not in PATH
-    echo Please install Node.js from https://nodejs.org/
-    pause
-    exit /b 1
-)
-
-:: Function to check if a port is in use
 setlocal enabledelayedexpansion
-set FRONTEND_PORT=3001
-set BACKEND_PORT=5001
 
-:: Check if ports are already in use
-netstat -ano | findstr ":%FRONTEND_PORT% .*LISTENING" >nul
-if !ERRORLEVEL! EQU 0 (
-    echo Frontend port %FRONTEND_PORT% is already in use.
-    echo Please stop any running instances before starting new ones.
-    echo You can use: taskkill /F /PID [PID] to stop a specific process
-    echo.
-    netstat -ano | findstr ":%FRONTEND_PORT% .*LISTENING"
+:: Set color codes
+set "GREEN=[32m"
+set "RED=[31m"
+set "YELLOW=[33m"
+set "NC=[0m"
+
+:: Check for Node.js
+echo Checking Node.js installation...
+node -v > nul 2>&1
+if errorlevel 1 (
+    echo %RED%Node.js is not installed. Please install Node.js and try again.%NC%
     pause
     exit /b 1
 )
 
-netstat -ano | findstr ":%BACKEND_PORT% .*LISTENING" >nul
-if !ERRORLEVEL! EQU 0 (
-    echo Backend port %BACKEND_PORT% is already in use.
-    echo Please stop any running instances before starting new ones.
-    echo You can use: taskkill /F /PID [PID] to stop a specific process
-    echo.
-    netstat -ano | findstr ":%BACKEND_PORT% .*LISTENING"
+:: Check for npm
+echo Checking npm installation...
+npm -v > nul 2>&1
+if errorlevel 1 (
+    echo %RED%npm is not installed. Please install npm and try again.%NC%
     pause
     exit /b 1
 )
 
-:: Check for required .env files
-if not exist "backend\.env" (
-    echo Error: backend\.env file is missing
-    echo Please create the file with required configuration
+:: Check if ports are available
+echo Checking port availability...
+
+:: Check port 3001 (frontend)
+netstat -ano | findstr :3001 > nul
+if not errorlevel 1 (
+    echo %RED%Port 3001 is already in use. Please free up the port and try again.%NC%
     pause
     exit /b 1
 )
 
-if not exist "frontend\.env" (
-    echo Error: frontend\.env file is missing
-    echo Please create the file with required configuration
+:: Check port 5001 (backend)
+netstat -ano | findstr :5001 > nul
+if not errorlevel 1 (
+    echo %RED%Port 5001 is already in use. Please free up the port and try again.%NC%
     pause
     exit /b 1
 )
 
-echo Starting Prompt Partner servers...
-echo.
+echo %GREEN%Starting Promptner servers...%NC%
 
-:: Start backend server in a new window
-start "Prompt Partner Backend" cmd /k "cd backend && echo Installing backend dependencies... && npm install && echo Starting backend server... && npm start"
+:: Start backend server
+echo %YELLOW%Starting backend server...%NC%
+start "Promptner Backend" cmd /k "cd backend && echo Installing backend dependencies... && npm install && echo Starting backend server... && npm start"
 
-:: Wait a moment for backend to start
-timeout /t 5 /nobreak
+:: Wait a moment before starting frontend
+timeout /t 5 /nobreak > nul
 
-:: Start frontend server in a new window
-start "Prompt Partner Frontend" cmd /k "cd frontend && echo Installing frontend dependencies... && npm install && echo Starting frontend server... && npm start"
+:: Start frontend server
+echo %YELLOW%Starting frontend server...%NC%
+start "Promptner Frontend" cmd /k "cd frontend && echo Installing frontend dependencies... && npm install && echo Starting frontend server... && npm start"
 
-echo.
-echo Servers are starting in separate windows...
-echo.
-echo Frontend will be available at: http://localhost:%FRONTEND_PORT%
-echo Backend will be available at: http://localhost:%BACKEND_PORT%
-echo.
-echo Press any key to exit this window (servers will continue running)
-pause >nul 
+echo %GREEN%Servers are starting. Please wait...%NC%
+echo %YELLOW%Frontend will be available at http://localhost:3001%NC%
+echo %YELLOW%Backend will be available at http://localhost:5001%NC%
+
+:: Keep the window open
+pause 
