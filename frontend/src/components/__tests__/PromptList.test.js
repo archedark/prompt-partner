@@ -2,7 +2,8 @@
  * @file PromptList.test.js
  * @description Unit tests for the <PromptList /> component. Ensures correct rendering
  *              of prompt entries, handling of checkbox selections, triggers for
- *              edit and delete callbacks, and behavior of the Clear Selection Button.
+ *              edit and delete callbacks, behavior of the Clear Selection Button,
+ *              and expandable prompt list functionality.
  *
  * @dependencies
  * - React
@@ -10,9 +11,10 @@
  * - PromptList (component under test)
  *
  * @notes
- * - Mocks callback props (onSelectPrompt, onDeletePrompt, onEditPromptClick, onClearSelections) to verify calls
- * - Tests empty prompt list vs. populated list
- * - Includes tests for Clear Selection Button visibility and functionality
+ * - Mocks callback props (onSelectPrompt, onDeletePrompt, onEditPromptClick, onClearSelections) to verify calls.
+ * - Tests empty prompt list vs. populated list.
+ * - Includes tests for Clear Selection Button visibility and functionality.
+ * - Expandable prompt list tests mock props (expandedStates, onToggleExpand, onCollapseAll) to guide implementation.
  */
 
 import React from 'react';
@@ -24,10 +26,22 @@ describe('<PromptList />', () => {
   const mockOnDeletePrompt = jest.fn();
   const mockOnEditPromptClick = jest.fn();
   const mockOnClearSelections = jest.fn();
+  const mockOnToggleExpand = jest.fn();
+  const mockOnCollapseAll = jest.fn();
 
   const samplePrompts = [
-    { id: 1, name: 'Prompt A', content: 'Content A', tags: 'tag1, tag2' },
-    { id: 2, name: 'Prompt B', content: 'Content B', tags: 'work, personal' },
+    {
+      id: 1,
+      name: 'Prompt A',
+      content: 'Content A line 1\nContent A line 2\nContent A line 3\nContent A line 4',
+      tags: 'tag1, tag2, tag3',
+    },
+    {
+      id: 2,
+      name: 'Prompt B',
+      content: 'Content B',
+      tags: 'work, personal',
+    },
   ];
 
   beforeEach(() => {
@@ -179,6 +193,80 @@ describe('<PromptList />', () => {
 
       // Note: UI state (checkboxes unchecking) should be verified in integration tests,
       // as unit tests don't re-render with updated props from parent state changes.
+    });
+  });
+
+  describe('Expandable Prompt List', () => {
+    test('renders prompts in collapsed state by default', () => {
+      render(
+        <PromptList
+          prompts={samplePrompts}
+          selectedPrompts={[]}
+          onSelectPrompt={mockOnSelectPrompt}
+          onDeletePrompt={mockOnDeletePrompt}
+          onEditPromptClick={mockOnEditPromptClick}
+          onClearSelections={mockOnClearSelections}
+          expandedStates={{}} // Mock prop: no prompts expanded
+          onToggleExpand={mockOnToggleExpand}
+          onCollapseAll={mockOnCollapseAll}
+        />
+      );
+
+      // Prompt A should show truncated content (2 lines) and tags
+      const promptAText = screen.getByText(/Content A line 1/);
+      expect(promptAText).toBeInTheDocument();
+      expect(screen.queryByText(/Content A line 3/)).not.toBeInTheDocument(); // Truncated
+      expect(screen.getByText(/tag1, tag2/)).toBeInTheDocument(); // Tags truncated implicitly by noOfLines
+
+      // Prompt B (short content) should show full content
+      expect(screen.getByText(/Content B/)).toBeInTheDocument();
+    });
+
+    test('expands prompt to show full content and tags on toggle', () => {
+      render(
+        <PromptList
+          prompts={samplePrompts}
+          selectedPrompts={[]}
+          onSelectPrompt={mockOnSelectPrompt}
+          onDeletePrompt={mockOnDeletePrompt}
+          onEditPromptClick={mockOnEditPromptClick}
+          onClearSelections={mockOnClearSelections}
+          expandedStates={{ 1: true }} // Mock prop: Prompt A expanded
+          onToggleExpand={mockOnToggleExpand}
+          onCollapseAll={mockOnCollapseAll}
+        />
+      );
+
+      // Simulate clicking expand toggle for Prompt A (mocking the action)
+      fireEvent.click(screen.getByText(/Prompt A/)); // Assuming toggle is tied to name click for this test
+      expect(mockOnToggleExpand).toHaveBeenCalledWith(1);
+
+      // Since implementation is pending, we expect full content and tags to be testable later
+      // For now, verify the mock call; actual rendering will fail until implemented
+    });
+
+    test('collapses all prompts when Collapse All is clicked', () => {
+      render(
+        <PromptList
+          prompts={samplePrompts}
+          selectedPrompts={[]}
+          onSelectPrompt={mockOnSelectPrompt}
+          onDeletePrompt={mockOnDeletePrompt}
+          onEditPromptClick={mockOnEditPromptClick}
+          onClearSelections={mockOnClearSelections}
+          expandedStates={{ 1: true, 2: true }} // Mock prop: both expanded
+          onToggleExpand={mockOnToggleExpand}
+          onCollapseAll={mockOnCollapseAll}
+        />
+      );
+
+      const collapseAllButton = screen.getByRole('button', { name: /Collapse All/i });
+      expect(collapseAllButton).toBeInTheDocument();
+
+      fireEvent.click(collapseAllButton);
+      expect(mockOnCollapseAll).toHaveBeenCalledTimes(1);
+
+      // Post-implementation, we'd check all prompts are collapsed; for now, it will fail
     });
   });
 });
