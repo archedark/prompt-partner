@@ -15,6 +15,10 @@
  * - Utilizes the Clipboard API for copying.
  * - Shows a toast notification on successful copy.
  * - Uses GPT-3 tokenizer for accurate token counts.
+ * - Repo Integration Requirements:
+ *   - Content Inclusion: Include full contents of checked files from directory prompts in the selectedPromptsText.
+ *   - Directory Tree Section: Precede file contents with a formatted directory tree of the tracked directory.
+ *   - Formatting: Delineate file contents with markdown-style code blocks (e.g., ```filename\ncontent\n```), matching the prompt file's delineation style.
  */
 
 import React from 'react';

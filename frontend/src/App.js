@@ -19,6 +19,11 @@
  * - Handles edge cases like empty prompt lists
  * - Manages expanded states for PromptList's expandable feature
  * - Added error handling with toast notifications for prompt creation
+ * - Repo Integration Requirements:
+ *   - Directory Selection: Implement a file picker to select a local directory on the user's computer.
+ *   - State Management: Track the selected directory path and file checkbox states (persisted across sessions using local storage).
+ *   - Data Propagation: Pass directory data and file selection state to PromptList for display and to MasterPrompt for content inclusion.
+ *   - Prompt Integration: Treat the directory as a special prompt type in the prompts array, distinguishable from regular prompts.
  */
 
 import React, { useState, useEffect } from 'react';
