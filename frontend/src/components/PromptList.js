@@ -5,8 +5,9 @@
  *
  * @dependencies
  * - React: For component rendering
- * - Chakra UI (Box, Text, Checkbox, IconButton, Stack, Heading, Flex, Button, useToast): UI components
+ * - Chakra UI (Box, Text, Checkbox, IconButton, Stack, Heading, Flex, Button, useToast, Badge): UI components
  * - @chakra-ui/icons (DeleteIcon, EditIcon, ChevronDownIcon, ChevronUpIcon, CopyIcon): Action button icons
+ * - gpt-tokenizer: For accurate GPT token counting
  *
  * @props
  * - prompts: Array of prompt objects (id, name, content, tags, created_at)
@@ -31,6 +32,7 @@
  *   - State Persistence: Store expanded/collapsed state in local storage (to be implemented later).
  *   - Bulk Collapse: 'Collapse All' button collapses all prompts at once.
  *   - Token Count: Display token count per prompt (overlaps with feature 8; deferred).
+ * - Uses GPT-3 tokenizer for accurate token counts.
  */
 
 import React from 'react';
@@ -44,6 +46,7 @@ import {
   Flex,
   Button,
   useToast,
+  Badge,
 } from '@chakra-ui/react';
 import { 
   DeleteIcon, 
@@ -52,6 +55,7 @@ import {
   ChevronUpIcon,
   CopyIcon,
 } from '@chakra-ui/icons';
+import { countTokens, getTokenColorScheme } from '../utils/tokenizer';
 
 const PromptList = ({
   prompts,
@@ -133,7 +137,13 @@ const PromptList = ({
                   </Text>
                 </Flex>
                 {/* Actions */}
-                <Flex gap={2}>
+                <Flex gap={2} alignItems="center">
+                  <Badge 
+                    colorScheme={getTokenColorScheme(countTokens(prompt.content))}
+                    variant="subtle"
+                  >
+                    {countTokens(prompt.content)} tokens
+                  </Badge>
                   <IconButton
                     aria-label={isExpanded ? 'Collapse Prompt' : 'Expand Prompt'}
                     icon={isExpanded ? <ChevronUpIcon /> : <ChevronDownIcon />}
