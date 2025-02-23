@@ -10,7 +10,7 @@
  * - PromptList (component under test)
  *
  * @notes
- * - Mocks callback props (onSelectPrompt, onDeletePrompt, onEditPromptClick) to verify calls
+ * - Mocks callback props (onSelectPrompt, onDeletePrompt, onEditPromptClick, onClearSelections) to verify calls
  * - Tests empty prompt list vs. populated list
  * - Includes tests for Clear Selection Button visibility and functionality
  */
@@ -23,6 +23,7 @@ describe('<PromptList />', () => {
   const mockOnSelectPrompt = jest.fn();
   const mockOnDeletePrompt = jest.fn();
   const mockOnEditPromptClick = jest.fn();
+  const mockOnClearSelections = jest.fn();
 
   const samplePrompts = [
     { id: 1, name: 'Prompt A', content: 'Content A', tags: 'tag1, tag2' },
@@ -138,6 +139,7 @@ describe('<PromptList />', () => {
           onSelectPrompt={mockOnSelectPrompt}
           onDeletePrompt={mockOnDeletePrompt}
           onEditPromptClick={mockOnEditPromptClick}
+          onClearSelections={mockOnClearSelections}
         />
       );
       expect(screen.queryByText(/Clear Selections/i)).not.toBeInTheDocument();
@@ -150,6 +152,7 @@ describe('<PromptList />', () => {
           onSelectPrompt={mockOnSelectPrompt}
           onDeletePrompt={mockOnDeletePrompt}
           onEditPromptClick={mockOnEditPromptClick}
+          onClearSelections={mockOnClearSelections}
         />
       );
       expect(screen.getByText(/Clear Selections/i)).toBeInTheDocument();
@@ -163,18 +166,19 @@ describe('<PromptList />', () => {
           onSelectPrompt={mockOnSelectPrompt}
           onDeletePrompt={mockOnDeletePrompt}
           onEditPromptClick={mockOnEditPromptClick}
+          onClearSelections={mockOnClearSelections}
         />
       );
 
       const clearButton = screen.getByRole('button', { name: /Clear Selections/i });
       expect(clearButton).toBeInTheDocument();
-      // Currently disabled in demo mode; test assumes it will be clickable
-      expect(clearButton).toBeDisabled(); // Reflects current state
 
-      // Simulate what happens when enabled (post-implementation)
+      // Click the clear button
       fireEvent.click(clearButton);
-      expect(mockOnSelectPrompt).toHaveBeenCalledWith(null); // Current placeholder behavior
-      // Note: After implementation, this might change to expect an empty array or specific clear signal
+      expect(mockOnClearSelections).toHaveBeenCalledTimes(1);
+
+      // Note: UI state (checkboxes unchecking) should be verified in integration tests,
+      // as unit tests don't re-render with updated props from parent state changes.
     });
   });
 });

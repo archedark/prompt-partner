@@ -118,6 +118,15 @@ function App() {
   };
 
   /**
+   * @function handleClearSelections
+   * @description Clears all selected prompts by resetting the selection arrays
+   */
+  const handleClearSelections = () => {
+    setSelectedPrompts([]);
+    setSelectedPromptOrder([]);
+  };
+
+  /**
    * @function handleTagFilterChange
    * @description Updates the tag filter state
    * @param {string} value - Filter input value
@@ -185,6 +194,7 @@ function App() {
             onSelectPrompt={handleSelectPrompt}
             onDeletePrompt={handleDeletePrompt}
             onEditPromptClick={setEditingPrompt}
+            onClearSelections={handleClearSelections}
           />
         </Box>
 
