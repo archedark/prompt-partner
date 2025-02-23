@@ -14,7 +14,7 @@ node_modules/
 *.sqlite
 *.sqlite3
 *.db
-prompts.db
+prompts.db*
 
 # Build outputs
 /build
