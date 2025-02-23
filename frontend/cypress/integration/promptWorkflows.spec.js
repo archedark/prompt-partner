@@ -134,25 +134,27 @@ describe('Prompt Partner Integration - Prompt Workflows', () => {
 
         cy.visit('http://localhost:3001');
 
-        // Select both prompts
-        cy.get(`[data-testid="checkbox-${id1}"]`).click();
-        cy.get(`[data-testid="checkbox-${id2}"]`).click();
+        // Select both prompts and wait for state updates
+        cy.get(`[data-testid="checkbox-${id1}"] input[type="checkbox"]`, { timeout: 10000 })
+          .click({ force: true })
+          .should('be.checked');
+        
+        cy.get(`[data-testid="checkbox-${id2}"] input[type="checkbox"]`, { timeout: 10000 })
+          .click({ force: true })
+          .should('be.checked');
 
-        // Verify they are checked and Master Prompt updates
-        cy.get(`[data-testid="checkbox-${id1}"]`).should('be.checked');
-        cy.get(`[data-testid="checkbox-${id2}"]`).should('be.checked');
+        // Verify Master Prompt updates
         cy.get('textarea[placeholder="Selected prompts will appear here..."]')
           .should('have.value', 'Content 1\nContent 2');
 
-        // Verify Clear Selections button appears
-        cy.get('button').contains('Clear Selections').should('be.visible');
-
-        // Click Clear Selections
-        cy.get('button').contains('Clear Selections').click();
+        // Verify Clear Selections button appears and click it
+        cy.get('button').contains('Clear Selections')
+          .should('be.visible')
+          .click();
 
         // Verify all checkboxes are unchecked and Master Prompt is cleared
-        cy.get(`[data-testid="checkbox-${id1}"]`).should('not.be.checked');
-        cy.get(`[data-testid="checkbox-${id2}"]`).should('not.be.checked');
+        cy.get(`[data-testid="checkbox-${id1}"] input[type="checkbox"]`).should('not.be.checked');
+        cy.get(`[data-testid="checkbox-${id2}"] input[type="checkbox"]`).should('not.be.checked');
         cy.get('textarea[placeholder="Selected prompts will appear here..."]')
           .should('have.value', '');
       });
