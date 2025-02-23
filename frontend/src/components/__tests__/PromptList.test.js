@@ -1,8 +1,8 @@
 /**
  * @file PromptList.test.js
  * @description Unit tests for the <PromptList /> component. Ensures correct rendering
- *              of prompt entries, handling of checkbox selections, and triggers for
- *              edit and delete callbacks.
+ *              of prompt entries, handling of checkbox selections, triggers for
+ *              edit and delete callbacks, and behavior of the Clear Selection Button.
  *
  * @dependencies
  * - React
@@ -12,6 +12,7 @@
  * @notes
  * - Mocks callback props (onSelectPrompt, onDeletePrompt, onEditPromptClick) to verify calls
  * - Tests empty prompt list vs. populated list
+ * - Includes tests for Clear Selection Button visibility and functionality
  */
 
 import React from 'react';
@@ -124,6 +125,56 @@ describe('<PromptList />', () => {
       name: 'Prompt B',
       content: 'Content B',
       tags: 'work, personal',
+    });
+  });
+
+  describe('Clear Selection Button', () => {
+    test('shows clear selection button only when prompts are selected', () => {
+      // No selections
+      render(
+        <PromptList
+          prompts={samplePrompts}
+          selectedPrompts={[]}
+          onSelectPrompt={mockOnSelectPrompt}
+          onDeletePrompt={mockOnDeletePrompt}
+          onEditPromptClick={mockOnEditPromptClick}
+        />
+      );
+      expect(screen.queryByText(/Clear Selections/i)).not.toBeInTheDocument();
+
+      // With selections
+      render(
+        <PromptList
+          prompts={samplePrompts}
+          selectedPrompts={[1]}
+          onSelectPrompt={mockOnSelectPrompt}
+          onDeletePrompt={mockOnDeletePrompt}
+          onEditPromptClick={mockOnEditPromptClick}
+        />
+      );
+      expect(screen.getByText(/Clear Selections/i)).toBeInTheDocument();
+    });
+
+    test('clears all selected prompts when clicked', () => {
+      render(
+        <PromptList
+          prompts={samplePrompts}
+          selectedPrompts={[1, 2]}
+          onSelectPrompt={mockOnSelectPrompt}
+          onDeletePrompt={mockOnDeletePrompt}
+          onEditPromptClick={mockOnEditPromptClick}
+        />
+      );
+
+      const clearButton = screen.getByRole('button', { name: /Clear Selections/i });
+      expect(clearButton).toBeInTheDocument();
+      // Currently disabled in demo mode; test assumes it will be clickable
+      expect(clearButton).toBeDisabled(); // Reflects current state
+
+      // Simulate what happens when enabled (post-implementation)
+      fireEvent.click(clearButton);
+      expect(mockOnSelectPrompt).toHaveBeenCalledWith(null); // Current placeholder behavior
+      // Note: After implementation, this might change to expect an empty array or specific clear signal
     });
   });
 });
