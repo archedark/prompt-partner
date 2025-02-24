@@ -15,9 +15,10 @@
  *
  * @notes
  * - Fetches prompts on mount and updates state with directory prompts.
- * - Directory selection sends path to backend via POST /directory.
+ * - Directory selection sends absolute path to backend via POST /directory.
  * - File checkbox states updated via PUT /directory/:id/file.
  * - Master Prompt includes directory tree and checked file contents.
+ * - Improved directory picker UI to clarify it's for selection, not upload.
  */
 
 import React, { useState, useEffect } from 'react';
@@ -48,7 +49,6 @@ function App() {
 
   const flexDirection = useBreakpointValue({ base: 'column', md: 'row' });
 
-  // Fetch prompts on mount and when directory changes
   useEffect(() => {
     const fetchPrompts = async () => {
       try {
@@ -174,8 +174,9 @@ function App() {
     const files = Array.from(event.target.files);
     if (!files.length) return;
 
-    const dirPath = files[0].webkitRelativePath.split('/')[0];
-    const fullPath = files[0].path || dirPath;
+    // Use the absolute path from the first file
+    const fullPath = files[0].path || files[0].webkitRelativePath.split('/')[0];
+    const dirName = fullPath.split(/[\\/]/).pop(); // Extract directory name for display
 
     try {
       const id = await setDirectory(fullPath);
@@ -183,7 +184,7 @@ function App() {
       setPrompts(updatedPrompts);
       toast({
         title: 'Directory Added',
-        description: `${dirPath} has been added as a prompt.`,
+        description: `${dirName} is now being watched.`,
         status: 'success',
         duration: 2000,
         isClosable: true,
@@ -197,6 +198,8 @@ function App() {
         isClosable: true,
       });
     }
+    // Reset input to allow re-selection of the same directory
+    event.target.value = '';
   };
 
   const handleFileCheckboxChange = async (promptId, filePath) => {
@@ -275,15 +278,55 @@ function App() {
         >
           Clear Filter
         </Button>
-        <Button as="label" colorScheme="blue" leftIcon={<>📁</>}>
-          Watch Directory
-          <input
-            type="file"
-            webkitdirectory="true"
-            directory="true"
-            style={{ display: 'none' }}
-            onChange={handleDirectorySelect}
-          />
+        <Button
+          onClick={async () => {
+            try {
+              const dirHandle = await window.showDirectoryPicker();
+              // Get a file handle from the directory to access its path
+              const fileHandles = [];
+              for await (const entry of dirHandle.values()) {
+                if (entry.kind === 'file') {
+                  fileHandles.push(entry);
+                  break;
+                }
+              }
+              
+              if (fileHandles.length === 0) {
+                throw new Error('Selected directory is empty');
+              }
+
+              const fileHandle = fileHandles[0];
+              const file = await fileHandle.getFile();
+              // Get the full path by removing the filename from the file path
+              const fullPath = file.path.substring(0, file.path.lastIndexOf('\\'));
+              
+              const id = await setDirectory(fullPath);
+              const updatedPrompts = await getPrompts();
+              setPrompts(updatedPrompts);
+              toast({
+                title: 'Directory Added',
+                description: `${fullPath} is now being watched.`,
+                status: 'success',
+                duration: 2000,
+                isClosable: true,
+              });
+            } catch (error) {
+              // User cancelled or API not supported
+              if (error.name !== 'AbortError') {
+                toast({
+                  title: 'Error Adding Directory',
+                  description: error.message,
+                  status: 'error',
+                  duration: 3000,
+                  isClosable: true,
+                });
+              }
+            }
+          }}
+          colorScheme="blue"
+          leftIcon={<>📁</>}
+        >
+          Select Directory to Watch
         </Button>
       </HStack>
 

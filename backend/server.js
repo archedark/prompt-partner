@@ -16,6 +16,7 @@
  * - CORS configured for http://localhost:3001 (frontend).
  * - Body parser limit increased to 10MB for large prompts.
  * - Implements filesystem watching for repo integration with debounced updates.
+ * - Ensures absolute directory paths are used for watching.
  */
 
 const express = require('express');
@@ -36,10 +37,8 @@ app.use(cors({
 }));
 app.use(bodyParser.json({ limit: '10mb' }));
 
-// Store watchers to prevent multiple watches on the same directory
 const watchers = new Map();
 
-// Debounce function to limit update frequency
 const debounce = (func, wait) => {
   let timeout;
   return (...args) => {
@@ -51,7 +50,7 @@ const debounce = (func, wait) => {
 /**
  * @function readDirectory
  * @description Reads directory contents, respecting .gitignore, and returns file data
- * @param {string} dirPath - Directory path to read
+ * @param {string} dirPath - Absolute directory path to read
  * @returns {Promise<Array>} Array of file objects {path, content, isChecked}
  */
 const readDirectory = async (dirPath) => {
@@ -92,7 +91,7 @@ const readDirectory = async (dirPath) => {
  * @function updateDirectoryPrompt
  * @description Updates directory prompt in DB when filesystem changes
  * @param {number} id - Prompt ID
- * @param {string} dirPath - Directory path
+ * @param {string} dirPath - Absolute directory path
  */
 const updateDirectoryPrompt = debounce(async (id, dirPath) => {
   const files = await readDirectory(dirPath);
@@ -165,15 +164,17 @@ app.post('/directory', async (req, res) => {
   if (!dirPath) return res.status(400).json({ error: 'Directory path is required' });
 
   try {
+    // Use absolute path directly as provided by the frontend
     await fs.access(dirPath); // Check if directory exists
     const files = await readDirectory(dirPath);
-    createPrompt('Directory Prompt', dirPath, 'directory', true, files, (err, id) => {
+    const dirName = path.basename(dirPath); // Use basename for a cleaner name
+    createPrompt(dirName, dirPath, 'directory', true, files, (err, id) => {
       if (err) {
         console.error('Database error:', err.message);
         return res.status(500).json({ error: 'Failed to create directory prompt: ' + err.message });
       }
 
-      // Start watching the directory
+      // Start watching the directory with absolute path
       const watcher = fs.watch(dirPath, { recursive: true }, () => {
         updateDirectoryPrompt(id, dirPath);
       });
