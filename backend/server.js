@@ -16,7 +16,7 @@
  * - CORS configured for http://localhost:3001 (frontend).
  * - Body parser limit increased to 10MB for large prompts.
  * - Implements filesystem watching for repo integration with debounced updates.
- * - Ensures absolute directory paths are used for watching.
+ * - Added GET /directories endpoint to list watched directories for frontend modal.
  */
 
 const express = require('express');
@@ -159,12 +159,22 @@ app.delete('/prompts/:id', (req, res) => {
   });
 });
 
+app.get('/directories', (req, res) => {
+  getPrompts((err, prompts) => {
+    if (err) {
+      console.error('Database error:', err.message);
+      return res.status(500).json({ error: 'Failed to fetch directories: ' + err.message });
+    }
+    const directories = prompts.filter(p => p.isDirectory);
+    res.json(directories);
+  });
+});
+
 app.post('/directory', async (req, res) => {
   const { path: dirPath } = req.body;
   if (!dirPath) return res.status(400).json({ error: 'Directory path is required' });
 
   try {
-    // Use absolute path directly as provided by the frontend
     await fs.access(dirPath); // Check if directory exists
     const files = await readDirectory(dirPath);
     const dirName = path.basename(dirPath); // Use basename for a cleaner name
@@ -174,7 +184,6 @@ app.post('/directory', async (req, res) => {
         return res.status(500).json({ error: 'Failed to create directory prompt: ' + err.message });
       }
 
-      // Start watching the directory with absolute path
       const watcher = fs.watch(dirPath, { recursive: true }, () => {
         updateDirectoryPrompt(id, dirPath);
       });

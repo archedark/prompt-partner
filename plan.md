@@ -125,7 +125,16 @@
 6. **Repo Integration**
    - [X] Identify repo integration requirements
    - [X] Write unit tests for repo integration
-   - [ ] Implement repo integration based on tests (then ensure no test failures)
+   - [ ] Implement backend modal for directory management
+     - [ ] Add GET /directories endpoint to list watched directories
+     - [ ] Update POST /directory to accept user input without requiring absolute path from frontend
+     - [ ] Add DELETE /directory/:id endpoint to remove watched directories
+     - [ ] Update server.js to manage directory state and watchers
+   - [ ] Implement frontend modal for "Watch Directories" button
+     - [ ] Replace showDirectoryPicker with a modal component
+     - [ ] Fetch and display current watched directories
+     - [ ] Allow adding new directories via input
+     - [ ] Allow removing directories
    - [ ] Manual testing to verify behavior
    - [ ] Write integration tests for repo integration
 7. **Prompt History**
