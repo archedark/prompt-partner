@@ -123,8 +123,8 @@
    - [X] Manual testing to verify behavior
    - [X] Write integration tests for expandable prompt list
 6. **Repo Integration**
-   - [ ] Identify repo integration requirements
-   - [ ] Write tests for repo integration
+   - [X] Identify repo integration requirements
+   - [X] Write unit tests for repo integration
    - [ ] Implement repo integration based on tests (then ensure no test failures)
    - [ ] Manual testing to verify behavior
    - [ ] Write integration tests for repo integration
