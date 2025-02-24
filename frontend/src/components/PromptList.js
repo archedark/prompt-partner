@@ -34,13 +34,13 @@
  *   - Token Count: Display token count per prompt (overlaps with feature 8; deferred).
  * - Uses GPT-3 tokenizer for accurate token counts.
  * - Repo Integration Requirements:
- *   - Directory Prompt: Display a special prompt type representing a selected directory from App.js.
+ *   - Directory Prompt: Display a special prompt type representing a directory watched by the backend.
  *   - Collapsed View: Show directory name and path, with expand/collapse toggle.
- *   - Expanded View: Recursively display the directory tree, excluding files in the selected directory's .gitignore (if one exists).
- *   - File Checkboxes: Each file in the tree has a checkbox; checked files contribute to the Master Prompt.
- *   - State Persistence: Checkbox states persist across expand/collapse and sessions (via local storage).
- *   - Selection Handling: Directory prompt selection (via onSelectPrompt) may toggle all file checkboxes or be independent.
- *   - Clear Selections Interaction: Clear Selections button clears the selection of the special prompt type but does not clear the checkboxes of the file tree
+ *   - Expanded View: Display the directory tree fetched from the backend, excluding files in .gitignore (handled by backend).
+ *   - File Checkboxes: Each file has a checkbox; checked states updated via backend API (PUT /directory/:id/file).
+ *   - State Persistence: File checkbox states persisted in backend database across sessions.
+ *   - Selection Handling: Directory selection independent of file checkboxes.
+ *   - Clear Selections Interaction: Clears directory selection but not file checkbox states.
  */
 
 import React from 'react';

@@ -1,7 +1,7 @@
 /**
  * @file App.js
  * @description Main application component for Promptner. Manages state for prompts,
- *              handles CRUD operations, and renders the UI layout with tag filtering.
+ *              handles CRUD operations, renders the UI layout with tag filtering, and integrates with backend filesystem watching.
  *
  * @dependencies
  * - React: For component lifecycle and state management
@@ -13,17 +13,15 @@
  * - SelectedPromptList: For managing selected prompt order
  *
  * @notes
- * - Fetches prompts on mount using useEffect
- * - Uses responsive layout with Chakra's useBreakpointValue
- * - Implements tag filtering with real-time updates
- * - Handles edge cases like empty prompt lists
- * - Manages expanded states for PromptList's expandable feature
- * - Added error handling with toast notifications for prompt creation
+ * - Fetches prompts on mount
+ * - Uses backend filesystem watching for directory prompts
+ * - Directory path sent to backend via POST /directory
+ * - File checkbox states updated via PUT /directory/:id/file
  * - Repo Integration Requirements:
- *   - Directory Selection: Implement a file picker to select a local directory on the user's computer.
- *   - State Management: Track the selected directory path and file checkbox states (persisted across sessions using local storage).
- *   - Data Propagation: Pass directory data and file selection state to PromptList for display and to MasterPrompt for content inclusion.
- *   - Prompt Integration: Treat the directory as a special prompt type in the prompts array, distinguishable from regular prompts.
+ *   - Directory Selection: Use a file picker to select a local directory, sending the path to the backend.
+ *   - State Management: File checkbox states persisted in backend database across sessions.
+ *   - Data Propagation: Directory data (file list, contents) fetched via GET /prompts and passed to PromptList and MasterPrompt.
+ *   - Prompt Integration: Directory treated as a special prompt type with isDirectory flag.
  */
 
 import React, { useState, useEffect } from 'react';
