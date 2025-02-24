@@ -61,9 +61,9 @@ const FileTree = ({ files, promptId, onFileCheckboxChange, expandedStates, onTog
         current = dir;
       }
 
-      // Add file to the deepest directory
+      // Add file to the deepest directory with isChecked defaulting to true
       const fileName = parts[parts.length - 1];
-      current.files.push({ ...file, name: fileName });
+      current.files.push({ ...file, name: fileName, isChecked: file.isChecked ?? true });
     });
 
     return tree.children.length > 0 || tree.files.length > 0 ? tree : {};

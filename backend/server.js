@@ -75,7 +75,7 @@ const readDirectory = async (dirPath) => {
 
       if (entry.isFile()) {
         const content = await fs.readFile(fullPath, 'utf8');
-        files.push({ path: relativePath, content, isChecked: false });
+        files.push({ path: relativePath, content, isChecked: true });
       } else if (entry.isDirectory()) {
         const subFiles = await readDirectory(fullPath);
         files.push(...subFiles.map(f => ({
