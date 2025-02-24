@@ -1,7 +1,8 @@
 /**
  * @file App.js
  * @description Main application component for Promptner. Manages state for prompts,
- *              handles CRUD operations, renders the UI layout with tag filtering, and integrates with backend filesystem watching.
+ *              handles CRUD operations, renders the UI layout with tag filtering,
+ *              and integrates with backend filesystem watching.
  *
  * @dependencies
  * - React: For component lifecycle and state management
@@ -13,15 +14,10 @@
  * - SelectedPromptList: For managing selected prompt order
  *
  * @notes
- * - Fetches prompts on mount
- * - Uses backend filesystem watching for directory prompts
- * - Directory path sent to backend via POST /directory
- * - File checkbox states updated via PUT /directory/:id/file
- * - Repo Integration Requirements:
- *   - Directory Selection: Use a file picker to select a local directory, sending the path to the backend.
- *   - State Management: File checkbox states persisted in backend database across sessions.
- *   - Data Propagation: Directory data (file list, contents) fetched via GET /prompts and passed to PromptList and MasterPrompt.
- *   - Prompt Integration: Directory treated as a special prompt type with isDirectory flag.
+ * - Fetches prompts on mount and updates state with directory prompts.
+ * - Directory selection sends path to backend via POST /directory.
+ * - File checkbox states updated via PUT /directory/:id/file.
+ * - Master Prompt includes directory tree and checked file contents.
  */
 
 import React, { useState, useEffect } from 'react';
@@ -39,7 +35,7 @@ import PromptList from './components/PromptList';
 import PromptEditor from './components/PromptEditor';
 import MasterPrompt from './components/MasterPrompt';
 import SelectedPromptList from './components/SelectedPromptList';
-import { getPrompts, createPrompt, updatePrompt, deletePrompt } from './api';
+import { getPrompts, createPrompt, updatePrompt, deletePrompt, setDirectory, updateDirectoryFileState } from './api';
 
 function App() {
   const [prompts, setPrompts] = useState([]);
@@ -50,25 +46,27 @@ function App() {
   const [expandedStates, setExpandedStates] = useState({});
   const toast = useToast();
 
-  // Responsive layout: column on mobile, row on desktop
   const flexDirection = useBreakpointValue({ base: 'column', md: 'row' });
 
-  // Fetch prompts on component mount
+  // Fetch prompts on mount and when directory changes
   useEffect(() => {
     const fetchPrompts = async () => {
-      const data = await getPrompts();
-      setPrompts(data);
+      try {
+        const data = await getPrompts();
+        setPrompts(data);
+      } catch (error) {
+        toast({
+          title: 'Error Fetching Prompts',
+          description: error.message,
+          status: 'error',
+          duration: 3000,
+          isClosable: true,
+        });
+      }
     };
     fetchPrompts();
   }, []);
 
-  /**
-   * @function handleAddPrompt
-   * @description Creates a new prompt in the database and updates local state
-   * @param {string} name - Prompt name
-   * @param {string} content - Prompt content
-   * @param {string} tags - Comma-separated tags
-   */
   const handleAddPrompt = async (name, content, tags) => {
     try {
       const newPromptId = await createPrompt(name, content, tags);
@@ -78,6 +76,8 @@ function App() {
         content,
         tags,
         created_at: new Date().toISOString(),
+        isDirectory: false,
+        files: [],
       };
       setPrompts([newPrompt, ...prompts]);
       toast({
@@ -98,115 +98,160 @@ function App() {
     }
   };
 
-  /**
-   * @function handleEditPrompt
-   * @description Updates an existing prompt and refreshes local state
-   * @param {number} id - Prompt ID
-   * @param {string} name - Updated name
-   * @param {string} content - Updated content
-   * @param {string} tags - Updated tags
-   */
   const handleEditPrompt = async (id, name, content, tags) => {
-    await updatePrompt(id, name, content, tags);
-    setPrompts(
-      prompts.map((p) => (p.id === id ? { ...p, name, content, tags } : p))
-    );
-    setEditingPrompt(null);
+    try {
+      await updatePrompt(id, name, content, tags);
+      setPrompts(prompts.map(p => (p.id === id ? { ...p, name, content, tags } : p)));
+      setEditingPrompt(null);
+      toast({
+        title: 'Prompt Updated',
+        description: `${name} has been updated.`,
+        status: 'success',
+        duration: 2000,
+        isClosable: true,
+      });
+    } catch (error) {
+      toast({
+        title: 'Error Updating Prompt',
+        description: error.message,
+        status: 'error',
+        duration: 3000,
+        isClosable: true,
+      });
+    }
   };
 
-  /**
-   * @function handleDeletePrompt
-   * @description Deletes a prompt and updates local state
-   * @param {number} id - Prompt ID to delete
-   */
   const handleDeletePrompt = async (id) => {
-    await deletePrompt(id);
-    setPrompts(prompts.filter((p) => p.id !== id));
-    setSelectedPrompts(selectedPrompts.filter((pid) => pid !== id));
-    setExpandedStates((prev) => {
-      const newState = { ...prev };
-      delete newState[id];
-      return newState;
-    });
+    try {
+      await deletePrompt(id);
+      setPrompts(prompts.filter(p => p.id !== id));
+      setSelectedPrompts(selectedPrompts.filter(pid => pid !== id));
+      setExpandedStates(prev => {
+        const newState = { ...prev };
+        delete newState[id];
+        return newState;
+      });
+      toast({
+        title: 'Prompt Deleted',
+        status: 'success',
+        duration: 2000,
+        isClosable: true,
+      });
+    } catch (error) {
+      toast({
+        title: 'Error Deleting Prompt',
+        description: error.message,
+        status: 'error',
+        duration: 3000,
+        isClosable: true,
+      });
+    }
   };
 
-  /**
-   * @function handleSelectPrompt
-   * @description Toggles prompt selection
-   * @param {number} id - Prompt ID
-   */
   const handleSelectPrompt = (id) => {
-    setSelectedPrompts((prev) => {
-      const newSelection = prev.includes(id)
-        ? prev.filter((pid) => pid !== id)
-        : [...prev, id];
+    setSelectedPrompts(prev => {
+      const newSelection = prev.includes(id) ? prev.filter(pid => pid !== id) : [...prev, id];
       setSelectedPromptOrder(newSelection);
       return newSelection;
     });
   };
 
-  /**
-   * @function handleClearSelections
-   * @description Clears all selected prompts by resetting the selection arrays
-   */
   const handleClearSelections = () => {
     setSelectedPrompts([]);
     setSelectedPromptOrder([]);
   };
 
-  /**
-   * @function handleTagFilterChange
-   * @description Updates the tag filter state
-   * @param {string} value - Filter input value
-   */
-  const handleTagFilterChange = (e) => {
-    setTagFilter(e.target.value);
-  };
+  const handleTagFilterChange = (e) => setTagFilter(e.target.value);
+  const clearTagFilter = () => setTagFilter('');
 
-  /**
-   * @function clearTagFilter
-   * @description Resets the tag filter
-   */
-  const clearTagFilter = () => {
-    setTagFilter('');
-  };
-
-  /**
-   * @function handleToggleExpand
-   * @description Toggles the expanded state of a prompt
-   * @param {number} id - Prompt ID
-   */
   const handleToggleExpand = (id) => {
-    setExpandedStates((prev) => ({
-      ...prev,
-      [id]: !prev[id],
-    }));
+    setExpandedStates(prev => ({ ...prev, [id]: !prev[id] }));
   };
 
-  /**
-   * @function handleCollapseAll
-   * @description Collapses all prompts by resetting expanded states
-   */
-  const handleCollapseAll = () => {
-    setExpandedStates({});
+  const handleCollapseAll = () => setExpandedStates({});
+
+  const handleDirectorySelect = async (event) => {
+    const files = Array.from(event.target.files);
+    if (!files.length) return;
+
+    const dirPath = files[0].webkitRelativePath.split('/')[0];
+    const fullPath = files[0].path || dirPath;
+
+    try {
+      const id = await setDirectory(fullPath);
+      const updatedPrompts = await getPrompts();
+      setPrompts(updatedPrompts);
+      toast({
+        title: 'Directory Added',
+        description: `${dirPath} has been added as a prompt.`,
+        status: 'success',
+        duration: 2000,
+        isClosable: true,
+      });
+    } catch (error) {
+      toast({
+        title: 'Error Adding Directory',
+        description: error.message,
+        status: 'error',
+        duration: 3000,
+        isClosable: true,
+      });
+    }
   };
 
-  // Filter prompts based on tagFilter
+  const handleFileCheckboxChange = async (promptId, filePath) => {
+    const prompt = prompts.find(p => p.id === promptId);
+    if (!prompt || !prompt.isDirectory) return;
+
+    const file = prompt.files.find(f => f.path === filePath);
+    const newCheckedState = !file.isChecked;
+
+    try {
+      await updateDirectoryFileState(promptId, filePath, newCheckedState);
+      setPrompts(prompts.map(p =>
+        p.id === promptId
+          ? { ...p, files: p.files.map(f => f.path === filePath ? { ...f, isChecked: newCheckedState } : f) }
+          : p
+      ));
+    } catch (error) {
+      toast({
+        title: 'Error Updating File State',
+        description: error.message,
+        status: 'error',
+        duration: 3000,
+        isClosable: true,
+      });
+    }
+  };
+
   const filteredPrompts = tagFilter
-    ? prompts.filter((prompt) => {
+    ? prompts.filter(prompt => {
         const searchTerm = tagFilter.toLowerCase();
-        // Search in name
         if (prompt.name.toLowerCase().includes(searchTerm)) return true;
-        // Search in tags
         if (!prompt.tags) return false;
-        const tags = prompt.tags.toLowerCase().split(',').map((tag) => tag.trim());
-        return tags.some((tag) => tag.includes(searchTerm));
+        const tags = prompt.tags.toLowerCase().split(',').map(tag => tag.trim());
+        return tags.some(tag => tag.includes(searchTerm));
       })
     : prompts;
 
-  // Generate combined text based on selected order
   const selectedPromptsText = selectedPromptOrder
-    .map((id) => prompts.find((p) => p.id === id)?.content)
+    .map(id => {
+      const prompt = prompts.find(p => p.id === id);
+      if (!prompt) return '';
+      if (prompt.isDirectory) {
+        const checkedFiles = prompt.files.filter(f => f.isChecked);
+        if (!checkedFiles.length && !selectedPrompts.includes(id)) return '';
+        const treeLines = prompt.files.map(file =>
+          `${file.isChecked ? '[x]' : '[ ]'} ${file.path}`
+        );
+        const treeText = `Directory Tree (${prompt.name}):\n${treeLines.join('\n')}\n`;
+        const fileContents = checkedFiles
+          .map(file => `\`\`\`${file.path}\n${file.content}\n\`\`\``)
+          .join('\n');
+        return `${treeText}${fileContents}`;
+      }
+      return prompt.content;
+    })
     .filter(Boolean)
     .join('\n');
 
@@ -216,8 +261,7 @@ function App() {
         Promptner
       </Heading>
 
-      {/* Tag Filter Input */}
-      <HStack mb={4}>
+      <HStack mb={4} spacing={4}>
         <Input
           placeholder="Search by name or tag"
           value={tagFilter}
@@ -231,10 +275,19 @@ function App() {
         >
           Clear Filter
         </Button>
+        <Button as="label" colorScheme="teal">
+          Select Directory
+          <input
+            type="file"
+            webkitdirectory="true"
+            directory="true"
+            style={{ display: 'none' }}
+            onChange={handleDirectorySelect}
+          />
+        </Button>
       </HStack>
 
       <Flex direction={flexDirection} gap={6}>
-        {/* Left Column: PromptList */}
         <Box flex="1" mb={{ base: 4, md: 0 }}>
           <PromptList
             prompts={filteredPrompts}
@@ -246,10 +299,10 @@ function App() {
             expandedStates={expandedStates}
             onToggleExpand={handleToggleExpand}
             onCollapseAll={handleCollapseAll}
+            onFileCheckboxChange={handleFileCheckboxChange}
           />
         </Box>
 
-        {/* Right Column: PromptEditor + SelectedPromptList + MasterPrompt */}
         <Flex direction="column" flex="1" gap={6}>
           <Box>
             <PromptEditor
