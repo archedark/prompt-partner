@@ -2,7 +2,7 @@
  * @file App.js
  * @description Main application component for Promptner. Manages state for prompts,
  *              handles CRUD operations, renders the UI layout with tag filtering,
- *              and integrates with backend filesystem watching.
+ *              and integrates with backend filesystem watching via a modal.
  *
  * @dependencies
  * - React: For component lifecycle and state management
@@ -12,13 +12,12 @@
  * - PromptEditor: For creating/editing prompts
  * - MasterPrompt: For displaying combined selected prompts
  * - SelectedPromptList: For managing selected prompt order
+ * - DirectoryManager: For managing watched directories
  *
  * @notes
  * - Fetches prompts on mount and updates state with directory prompts.
- * - Directory selection sends absolute path to backend via POST /directory.
- * - File checkbox states updated via PUT /directory/:id/file.
+ * - Replaced directory picker with a modal for full directory management.
  * - Master Prompt includes directory tree and checked file contents.
- * - Improved directory picker UI to clarify it's for selection, not upload.
  */
 
 import React, { useState, useEffect } from 'react';
@@ -31,11 +30,14 @@ import {
   Button,
   HStack,
   useToast,
+  Modal,
+  ModalOverlay,
 } from '@chakra-ui/react';
 import PromptList from './components/PromptList';
 import PromptEditor from './components/PromptEditor';
 import MasterPrompt from './components/MasterPrompt';
 import SelectedPromptList from './components/SelectedPromptList';
+import DirectoryManager from './components/DirectoryManager';
 import { getPrompts, createPrompt, updatePrompt, deletePrompt, setDirectory, updateDirectoryFileState } from './api';
 
 function App() {
@@ -45,6 +47,7 @@ function App() {
   const [editingPrompt, setEditingPrompt] = useState(null);
   const [tagFilter, setTagFilter] = useState('');
   const [expandedStates, setExpandedStates] = useState({});
+  const [isModalOpen, setIsModalOpen] = useState(false);
   const toast = useToast();
 
   const flexDirection = useBreakpointValue({ base: 'column', md: 'row' });
@@ -170,38 +173,6 @@ function App() {
 
   const handleCollapseAll = () => setExpandedStates({});
 
-  const handleDirectorySelect = async (event) => {
-    const files = Array.from(event.target.files);
-    if (!files.length) return;
-
-    // Use the absolute path from the first file
-    const fullPath = files[0].path || files[0].webkitRelativePath.split('/')[0];
-    const dirName = fullPath.split(/[\\/]/).pop(); // Extract directory name for display
-
-    try {
-      const id = await setDirectory(fullPath);
-      const updatedPrompts = await getPrompts();
-      setPrompts(updatedPrompts);
-      toast({
-        title: 'Directory Added',
-        description: `${dirName} is now being watched.`,
-        status: 'success',
-        duration: 2000,
-        isClosable: true,
-      });
-    } catch (error) {
-      toast({
-        title: 'Error Adding Directory',
-        description: error.message,
-        status: 'error',
-        duration: 3000,
-        isClosable: true,
-      });
-    }
-    // Reset input to allow re-selection of the same directory
-    event.target.value = '';
-  };
-
   const handleFileCheckboxChange = async (promptId, filePath) => {
     const prompt = prompts.find(p => p.id === promptId);
     if (!prompt || !prompt.isDirectory) return;
@@ -225,6 +196,10 @@ function App() {
         isClosable: true,
       });
     }
+  };
+
+  const handlePromptsUpdate = (updatedPrompts) => {
+    setPrompts(updatedPrompts);
   };
 
   const filteredPrompts = tagFilter
@@ -279,54 +254,11 @@ function App() {
           Clear Filter
         </Button>
         <Button
-          onClick={async () => {
-            try {
-              const dirHandle = await window.showDirectoryPicker();
-              // Get a file handle from the directory to access its path
-              const fileHandles = [];
-              for await (const entry of dirHandle.values()) {
-                if (entry.kind === 'file') {
-                  fileHandles.push(entry);
-                  break;
-                }
-              }
-              
-              if (fileHandles.length === 0) {
-                throw new Error('Selected directory is empty');
-              }
-
-              const fileHandle = fileHandles[0];
-              const file = await fileHandle.getFile();
-              // Get the full path by removing the filename from the file path
-              const fullPath = file.path.substring(0, file.path.lastIndexOf('\\'));
-              
-              const id = await setDirectory(fullPath);
-              const updatedPrompts = await getPrompts();
-              setPrompts(updatedPrompts);
-              toast({
-                title: 'Directory Added',
-                description: `${fullPath} is now being watched.`,
-                status: 'success',
-                duration: 2000,
-                isClosable: true,
-              });
-            } catch (error) {
-              // User cancelled or API not supported
-              if (error.name !== 'AbortError') {
-                toast({
-                  title: 'Error Adding Directory',
-                  description: error.message,
-                  status: 'error',
-                  duration: 3000,
-                  isClosable: true,
-                });
-              }
-            }
-          }}
+          onClick={() => setIsModalOpen(true)}
           colorScheme="blue"
           leftIcon={<>📁</>}
         >
-          Select Directory to Watch
+          Manage Directories
         </Button>
       </HStack>
 
@@ -366,6 +298,14 @@ function App() {
           </Box>
         </Flex>
       </Flex>
+
+      <Modal isOpen={isModalOpen} onClose={() => setIsModalOpen(false)}>
+        <ModalOverlay />
+        <DirectoryManager
+          onClose={() => setIsModalOpen(false)}
+          onPromptsUpdate={handlePromptsUpdate}
+        />
+      </Modal>
     </Box>
   );
 }

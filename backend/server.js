@@ -16,8 +16,8 @@
  * - CORS configured for http://localhost:3001 (frontend).
  * - Body parser limit increased to 10MB for large prompts.
  * - Implements filesystem watching for repo integration with debounced updates.
- * - Added GET /directories endpoint to list watched directories for frontend modal.
- * - Updated POST /directory to accept user-provided paths without requiring frontend absolute path.
+ * - Added DELETE /directory/:id endpoint to stop watching and remove directories.
+ * - Enhanced watcher management for better state consistency.
  */
 
 const express = require('express');
@@ -152,9 +152,9 @@ app.delete('/prompts/:id', (req, res) => {
       console.error('Database error:', err.message);
       return res.status(500).json({ error: 'Failed to delete prompt: ' + err.message });
     }
-    if (watchers.has(id)) {
-      watchers.get(id).close();
-      watchers.delete(id);
+    if (watchers.has(parseInt(id))) {
+      watchers.get(parseInt(id)).close();
+      watchers.delete(parseInt(id));
     }
     res.status(204).send();
   });
@@ -176,20 +176,17 @@ app.post('/directory', async (req, res) => {
   if (!dirPath) return res.status(400).json({ error: 'Directory path is required' });
 
   try {
-    // Validate that the directory exists and is accessible from the backend context
     const resolvedPath = path.resolve(dirPath);
-    await fs.access(resolvedPath); // Check if directory exists and is readable
+    await fs.access(resolvedPath);
     const files = await readDirectory(resolvedPath);
-    const dirName = path.basename(resolvedPath); // Use basename for display name
-    
-    // Create a directory prompt in the database
+    const dirName = path.basename(resolvedPath);
+
     createPrompt(dirName, resolvedPath, 'directory', true, files, (err, id) => {
       if (err) {
         console.error('Database error:', err.message);
         return res.status(500).json({ error: 'Failed to create directory prompt: ' + err.message });
       }
 
-      // Start filesystem watcher for the directory
       const watcher = fs.watch(resolvedPath, { recursive: true }, () => {
         updateDirectoryPrompt(id, resolvedPath);
       });
@@ -228,6 +225,40 @@ app.put('/directory/:id/file', (req, res) => {
         console.error('Database error:', updateErr.message);
         return res.status(500).json({ error: 'Failed to update file state: ' + updateErr.message });
       }
+      res.status(204).send();
+    });
+  });
+});
+
+app.delete('/directory/:id', (req, res) => {
+  const { id } = req.params;
+  const promptId = parseInt(id);
+
+  getPrompts((err, prompts) => {
+    if (err) {
+      console.error('Database error:', err.message);
+      return res.status(500).json({ error: 'Failed to fetch prompts: ' + err.message });
+    }
+    const prompt = prompts.find(p => p.id === promptId);
+    if (!prompt || !prompt.isDirectory) {
+      return res.status(404).json({ error: 'Directory prompt not found' });
+    }
+
+    deletePrompt(promptId, (deleteErr) => {
+      if (deleteErr) {
+        console.error('Database error:', deleteErr.message);
+        return res.status(500).json({ error: 'Failed to delete directory: ' + deleteErr.message });
+      }
+
+      if (watchers.has(promptId)) {
+        try {
+          watchers.get(promptId).close();
+          watchers.delete(promptId);
+        } catch (watchErr) {
+          console.error('Error closing watcher:', watchErr.message);
+        }
+      }
+
       res.status(204).send();
     });
   });
