@@ -275,8 +275,8 @@ function App() {
         >
           Clear Filter
         </Button>
-        <Button as="label" colorScheme="teal">
-          Select Directory
+        <Button as="label" colorScheme="blue" leftIcon={<>📁</>}>
+          Watch Directory
           <input
             type="file"
             webkitdirectory="true"
