@@ -30,8 +30,8 @@ import {
   Badge,
   HStack,
   Tooltip,
+  useToast,
 } from '@chakra-ui/react';
-import { useToast } from '@chakra-ui/toast';
 import { countTokens, getTokenColorScheme, DEFAULT_MAX_TOKENS } from '../utils/tokenizer';
 
 const MasterPrompt = ({ selectedPromptsText }) => {
