@@ -136,11 +136,12 @@
      - [X] Allow adding new directories via input
      - [X] Allow removing directories
    - [X] Refinement
-     - [ ] Very slow: adding a directory, checking a file, expanding the directory list. Everything that interacts with the backend most likely.
      - [X] Needs to ignore the selected directories' .gitignore list if it has one.
      - [X] File tree should be recursively collapsible/expandable rather than just a list of files' absolute paths.
-     - [ ] File tree rendered to master prompt should be a condensed tree rather than a flat list of files' absolute paths. It should also not include files/dirs on the .gitignore list.
+     - [X] File tree rendered to master prompt should be a condensed tree rather than a flat list of files' absolute paths. It should also not include files/dirs on the .gitignore list.
      - [ ] Bug: A folder was included as a file in the expanded state. It didn't have the folder's contents nested beneath.
+   - [ ] Fix the lag between frontend and backend interactions (e.g., adding a directory, checking a file, expanding the directory list)
+      - [ ] Prototype WebSocket integration or caching on a separate branch to test performance gains before committing to a full refactor
    - [ ] Manual testing to verify behavior
    - [ ] Write integration tests for repo integration
 7. **Prompt History**

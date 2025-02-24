@@ -40,7 +40,13 @@ const FileTree = ({ files, promptId, onFileCheckboxChange, expandedStates, onTog
   const buildTree = (fileList) => {
     const tree = { name: '', children: [], files: [] };
 
-    fileList.forEach(file => {
+    // Filter out .git and .venv folders and their contents
+    const filteredFiles = fileList.filter(file => {
+      const parts = file.path.split(/[\\/]/).filter(Boolean);
+      return !parts.includes('.git') && !parts.includes('.venv');
+    });
+
+    filteredFiles.forEach(file => {
       const parts = file.path.split(/[\\/]/).filter(Boolean);
       let current = tree;
 

@@ -17,7 +17,7 @@
  * @notes
  * - Fetches prompts on mount and updates state with directory prompts.
  * - Replaced directory picker with a modal for full directory management.
- * - Master Prompt includes directory tree and checked file contents.
+ * - Master Prompt now includes a condensed directory tree and checked file contents.
  */
 
 import React, { useState, useEffect } from 'react';
@@ -212,6 +212,42 @@ function App() {
       })
     : prompts;
 
+  // Build a condensed tree structure for directory prompts
+  const buildTreeText = (files, indent = '') => {
+    // Filter out .git and .venv folders and their contents
+    const filteredFiles = files.filter(file => {
+      const parts = file.path.split(/[\\/]/).filter(Boolean);
+      return !parts.includes('.git') && !parts.includes('.venv');
+    });
+
+    const tree = {};
+    filteredFiles.forEach(file => {
+      const parts = file.path.split(/[\\/]/).filter(Boolean);
+      let current = tree;
+      parts.forEach((part, index) => {
+        if (!current[part]) {
+          current[part] = { children: {}, isFile: index === parts.length - 1, fileData: file };
+        }
+        current = current[part].children;
+      });
+    });
+
+    const lines = [];
+    const traverse = (node, levelIndent = '') => {
+      Object.keys(node).forEach(name => {
+        const item = node[name];
+        if (item.isFile) {
+          lines.push(`${levelIndent}${item.fileData.isChecked ? '[x]' : '[ ]'} ${name}`);
+        } else {
+          lines.push(`${levelIndent}- ${name}/`);
+          traverse(item.children, levelIndent + '  ');
+        }
+      });
+    };
+    traverse(tree);
+    return lines.join('\n');
+  };
+
   const selectedPromptsText = selectedPromptOrder
     .map(id => {
       const prompt = prompts.find(p => p.id === id);
@@ -219,14 +255,11 @@ function App() {
       if (prompt.isDirectory) {
         const checkedFiles = prompt.files.filter(f => f.isChecked);
         if (!checkedFiles.length && !selectedPrompts.includes(id)) return '';
-        const treeLines = prompt.files.map(file =>
-          `${file.isChecked ? '[x]' : '[ ]'} ${file.path}`
-        );
-        const treeText = `Directory Tree (${prompt.name}):\n${treeLines.join('\n')}\n`;
+        const treeText = buildTreeText(prompt.files);
         const fileContents = checkedFiles
           .map(file => `\`\`\`${file.path}\n${file.content}\n\`\`\``)
           .join('\n');
-        return `${treeText}${fileContents}`;
+        return `Directory Tree (${prompt.name}):\n${treeText}\n${fileContents}`.trim();
       }
       return prompt.content;
     })
