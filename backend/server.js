@@ -18,8 +18,8 @@
  * - Implements filesystem watching for repo integration with debounced updates.
  * - Added DELETE /directory/:id endpoint to stop watching and remove directories.
  * - Enhanced watcher management for better state consistency.
+ * - Updated readDirectory to exclude files listed in .gitignore contents.
  */
-
 const express = require('express');
 const cors = require('cors');
 const bodyParser = require('body-parser');
@@ -50,7 +50,7 @@ const debounce = (func, wait) => {
 
 /**
  * @function readDirectory
- * @description Reads directory contents, respecting .gitignore, and returns file data
+ * @description Reads directory contents recursively, excluding files/patterns listed in .gitignore
  * @param {string} dirPath - Directory path to read (absolute or resolvable relative path)
  * @returns {Promise<Array>} Array of file objects {path, content, isChecked}
  */
@@ -65,9 +65,12 @@ const readDirectory = async (dirPath) => {
 
     const files = [];
     const entries = await fs.readdir(dirPath, { withFileTypes: true });
+
     for (const entry of entries) {
       const fullPath = path.join(dirPath, entry.name);
       const relativePath = path.relative(dirPath, fullPath);
+
+      // Skip if the file or directory matches a .gitignore pattern
       if (ig.ignores(relativePath)) continue;
 
       if (entry.isFile()) {

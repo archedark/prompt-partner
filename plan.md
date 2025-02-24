@@ -135,10 +135,12 @@
      - [X] Fetch and display current watched directories
      - [X] Allow adding new directories via input
      - [X] Allow removing directories
-   - [ ] Refinement
+   - [X] Refinement
      - [ ] Very slow: adding a directory, checking a file, expanding the directory list. Everything that interacts with the backend most likely.
-     - [ ] Needs to ignore the selected directories' .gitignore list if it has one.
-     - [ ] File tree should be recursively collapsible/expandable rather than just a list of files' absolute paths.
+     - [X] Needs to ignore the selected directories' .gitignore list if it has one.
+     - [X] File tree should be recursively collapsible/expandable rather than just a list of files' absolute paths.
+     - [ ] File tree rendered to master prompt should be a condensed tree rather than a flat list of files' absolute paths. It should also not include files/dirs on the .gitignore list.
+     - [ ] Bug: A folder was included as a file in the expanded state. It didn't have the folder's contents nested beneath.
    - [ ] Manual testing to verify behavior
    - [ ] Write integration tests for repo integration
 7. **Prompt History**

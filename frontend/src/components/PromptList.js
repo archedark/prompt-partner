@@ -2,13 +2,14 @@
  * @file PromptList.js
  * @description Displays a scrollable list of prompts with checkboxes, expand/collapse toggles,
  *              plus edit/delete buttons and clear selections/collapse all options.
- *              Supports directory prompts with file trees and checkboxes.
+ *              Supports directory prompts with recursive, collapsible file trees.
  *
  * @dependencies
  * - React: For component rendering
  * - Chakra UI: For UI components
  * - @chakra-ui/icons: For action button icons
  * - gpt-tokenizer: For token counting
+ * - FileTree: For rendering recursive directory structures
  *
  * @props
  * - prompts: Array of prompt objects (id, name, content, tags, created_at, isDirectory, files)
@@ -18,12 +19,15 @@
  * - onEditPromptClick: Function to set editingPrompt state
  * - onClearSelections: Function to clear all selections
  * - expandedStates: Object mapping prompt IDs to boolean (expanded state)
- * - onToggleExpand: Function to toggle expansion state
+ * - onToggleExpand: Function to toggle prompt expansion state
  * - onCollapseAll: Function to collapse all prompts
  * - onFileCheckboxChange: Function to toggle file checkbox state in directory prompts
+ *
+ * @notes
+ * - Added recursive file tree rendering with collapsible states via FileTree component.
+ * - Maintains separate expanded states for prompts and file tree nodes.
  */
-
-import React from 'react';
+import React, { useState } from 'react';
 import {
   Box,
   Text,
@@ -44,6 +48,7 @@ import {
   CopyIcon,
 } from '@chakra-ui/icons';
 import { countTokens, getTokenColorScheme } from '../utils/tokenizer';
+import FileTree from './FileTree';
 
 const PromptList = ({
   prompts,
@@ -58,6 +63,7 @@ const PromptList = ({
   onFileCheckboxChange,
 }) => {
   const toast = useToast();
+  const [expandedFileStates, setExpandedFileStates] = useState({});
 
   const handleCopyPrompt = async (content, name) => {
     try {
@@ -76,6 +82,14 @@ const PromptList = ({
         isClosable: true,
       });
     }
+  };
+
+  const handleToggleFileExpand = (path) => {
+    setExpandedFileStates(prev => ({ ...prev, [path]: !prev[path] }));
+  };
+
+  const handleCollapseAllFiles = () => {
+    setExpandedFileStates({});
   };
 
   return (
@@ -174,20 +188,13 @@ const PromptList = ({
                   pr={isExpanded ? 2 : 0}
                 >
                   {prompt.isDirectory && isExpanded ? (
-                    <Stack spacing={2}>
-                      {prompt.files.map(file => (
-                        <Flex key={file.path} alignItems="center">
-                          <Checkbox
-                            isChecked={file.isChecked}
-                            onChange={() => onFileCheckboxChange(prompt.id, file.path)}
-                            mr={2}
-                          />
-                          <Text color="gray.600" fontSize="sm">
-                            {file.path}
-                          </Text>
-                        </Flex>
-                      ))}
-                    </Stack>
+                    <FileTree
+                      files={prompt.files}
+                      promptId={prompt.id}
+                      onFileCheckboxChange={onFileCheckboxChange}
+                      expandedStates={expandedFileStates}
+                      onToggleExpand={handleToggleFileExpand}
+                    />
                   ) : (
                     <Text color="gray.600" noOfLines={isExpanded ? undefined : 2}>
                       {prompt.content}
@@ -212,8 +219,12 @@ const PromptList = ({
       <Stack direction="row" mt={4} spacing={2}>
         <Button
           colorScheme="gray"
-          onClick={onCollapseAll}
-          isDisabled={Object.values(expandedStates).every(state => !state)}
+          onClick={() => {
+            onCollapseAll();
+            handleCollapseAllFiles();
+          }}
+          isDisabled={Object.values(expandedStates).every(state => !state) && 
+                      Object.values(expandedFileStates).every(state => !state)}
         >
           Collapse All
         </Button>
