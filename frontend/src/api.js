@@ -152,3 +152,27 @@ export const updateDirectoryFileState = async (id, filePath, isChecked) => {
     throw error;
   }
 };
+
+/**
+ * @function getFileContent
+ * @description Fetches the content of a specific file from a directory prompt
+ * @param {number} directoryId - Directory prompt ID
+ * @param {string} filePath - Path of the file within the directory
+ * @returns {Promise<string>} File content
+ */
+export const getFileContent = async (directoryId, filePath) => {
+  try {
+    const response = await fetch(
+      `${API_URL}/directory/${directoryId}/file?filePath=${encodeURIComponent(filePath)}`
+    );
+    if (!response.ok) {
+      const errorData = await response.json();
+      throw new Error(errorData.error || 'Failed to fetch file content');
+    }
+    const data = await response.json();
+    return data.content;
+  } catch (error) {
+    console.error('API error:', error.message);
+    throw error;
+  }
+};

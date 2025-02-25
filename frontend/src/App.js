@@ -38,7 +38,7 @@ import PromptEditor from './components/PromptEditor';
 import MasterPrompt from './components/MasterPrompt';
 import SelectedPromptList from './components/SelectedPromptList';
 import DirectoryManager from './components/DirectoryManager';
-import { getPrompts, createPrompt, updatePrompt, deletePrompt, setDirectory, updateDirectoryFileState } from './api';
+import { getPrompts, createPrompt, updatePrompt, deletePrompt, setDirectory, updateDirectoryFileState, getFileContent } from './api';
 
 function App() {
   const [prompts, setPrompts] = useState([]);
@@ -217,7 +217,10 @@ function App() {
     // Filter out .git and .venv folders and their contents
     const filteredFiles = files.filter(file => {
       const parts = file.path.split(/[\\/]/).filter(Boolean);
-      return !parts.includes('.git') && !parts.includes('.venv');
+      // Check if any part of the path is .git or .venv
+      return !parts.includes('.git') && !parts.includes('.venv') && 
+             // Also check if the path starts with .git/ or .git\
+             !file.path.startsWith('.git/') && !file.path.startsWith('.git\\');
     });
 
     const tree = {};
@@ -248,29 +251,56 @@ function App() {
     return lines.join('\n');
   };
 
-  const selectedPromptsText = selectedPromptOrder
-    .map(id => {
+  const selectedPromptsText = async () => {
+    const textPromises = selectedPromptOrder.map(async (id) => {
       const prompt = prompts.find(p => p.id === id);
       if (!prompt) return '';
+      
       if (prompt.isDirectory) {
-        // Filter out .git and .venv folders and their contents before processing
-        const filteredFiles = prompt.files.filter(file => {
-          const parts = file.path.split(/[\\/]/).filter(Boolean);
-          return !parts.includes('.git') && !parts.includes('.venv');
+        // Get checked files (metadata only at this point)
+        const checkedFiles = prompt.files.filter(f => f.isChecked);
+        if (!checkedFiles.length && !selectedPrompts.includes(id)) return '';
+        
+        // Build the tree text
+        const treeText = buildTreeText(prompt.files);
+        
+        // Fetch content for each checked file
+        const fileContentsPromises = checkedFiles.map(async (file) => {
+          try {
+            // Fetch the content from the backend
+            const content = await getFileContent(prompt.id, file.path);
+            return `\`\`\`${file.path}\n${content}\n\`\`\``;
+          } catch (error) {
+            console.error(`Error fetching content for ${file.path}:`, error);
+            return `\`\`\`${file.path}\n[Error loading content: ${error.message}]\n\`\`\``;
+          }
         });
         
-        const checkedFiles = filteredFiles.filter(f => f.isChecked);
-        if (!checkedFiles.length && !selectedPrompts.includes(id)) return '';
-        const treeText = buildTreeText(filteredFiles);
-        const fileContents = checkedFiles
-          .map(file => `\`\`\`${file.path}\n${file.content}\n\`\`\``)
-          .join('\n');
-        return `Directory Tree (${prompt.name}):\n${treeText}\n${fileContents}`.trim();
+        // Wait for all file contents to be fetched
+        const fileContents = await Promise.all(fileContentsPromises);
+        return `Directory Tree (${prompt.name}):\n${treeText}\n${fileContents.join('\n')}`.trim();
       }
+      
       return prompt.content;
-    })
-    .filter(Boolean)
-    .join('\n');
+    });
+    
+    // Wait for all text promises to resolve
+    const texts = await Promise.all(textPromises);
+    return texts.filter(Boolean).join('\n');
+  };
+
+  // State for the master prompt text
+  const [masterPromptText, setMasterPromptText] = useState('');
+  
+  // Update master prompt text when selections change
+  useEffect(() => {
+    const updateMasterPrompt = async () => {
+      const text = await selectedPromptsText();
+      setMasterPromptText(text);
+    };
+    
+    updateMasterPrompt();
+  }, [selectedPrompts, selectedPromptOrder, prompts]);
 
   return (
     <Box p={4}>
@@ -333,7 +363,7 @@ function App() {
             />
           </Box>
           <Box>
-            <MasterPrompt selectedPromptsText={selectedPromptsText} />
+            <MasterPrompt selectedPromptsText={masterPromptText} />
           </Box>
         </Flex>
       </Flex>

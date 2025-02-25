@@ -52,9 +52,10 @@ const debounce = (func, wait) => {
  * @function readDirectory
  * @description Reads directory contents recursively, excluding files/patterns listed in .gitignore
  * @param {string} dirPath - Directory path to read (absolute or resolvable relative path)
- * @returns {Promise<Array>} Array of file objects {path, content, isChecked}
+ * @param {boolean} includeContents - Whether to include file contents or just metadata
+ * @returns {Promise<Array>} Array of file objects {path, content?, isChecked, size}
  */
-const readDirectory = async (dirPath) => {
+const readDirectory = async (dirPath, includeContents = true) => {
   try {
     const ig = ignore();
     const gitignorePath = path.join(dirPath, '.gitignore');
@@ -63,6 +64,18 @@ const readDirectory = async (dirPath) => {
       ig.add(gitignoreContent);
     }
 
+    // Add common binary file types to ignore
+    ig.add([
+      '*.exe', '*.dll', '*.so', '*.dylib',
+      '*.zip', '*.tar', '*.gz', '*.rar',
+      '*.jpg', '*.jpeg', '*.png', '*.gif', '*.bmp',
+      '*.mp3', '*.mp4', '*.avi', '*.mov',
+      '*.pdf', '*.doc', '*.docx', '*.ppt', '*.pptx',
+      '*.xls', '*.xlsx', '*.db', '*.sqlite',
+      'node_modules', '.venv', 'venv', '.git',
+      'dist', 'build', 'coverage'
+    ]);
+
     const files = [];
     const entries = await fs.readdir(dirPath, { withFileTypes: true });
 
@@ -70,14 +83,50 @@ const readDirectory = async (dirPath) => {
       const fullPath = path.join(dirPath, entry.name);
       const relativePath = path.relative(dirPath, fullPath);
 
+      // Explicitly skip .git directories and their contents
+      if (entry.name === '.git' || relativePath.startsWith('.git/') || relativePath.startsWith('.git\\')) {
+        continue;
+      }
+      
       // Skip if the file or directory matches a .gitignore pattern
       if (ig.ignores(relativePath)) continue;
 
       if (entry.isFile()) {
-        const content = await fs.readFile(fullPath, 'utf8');
-        files.push({ path: relativePath, content, isChecked: true });
+        try {
+          // Get file stats for size information
+          const stats = await fs.stat(fullPath);
+          const fileSize = stats.size;
+          
+          // Create file object with metadata
+          const fileObj = { 
+            path: relativePath, 
+            size: fileSize,
+            isChecked: false 
+          };
+          
+          // Only include content if requested and file is text
+          if (includeContents) {
+            try {
+              const content = await fs.readFile(fullPath, 'utf8');
+              fileObj.content = content;
+            } catch (readErr) {
+              console.error(`Error reading file ${relativePath}:`, readErr);
+              fileObj.content = `[Error reading file: ${readErr.message}]`;
+            }
+          }
+          
+          files.push(fileObj);
+        } catch (fileErr) {
+          console.error(`Error processing file ${relativePath}:`, fileErr);
+          files.push({ 
+            path: relativePath, 
+            error: fileErr.message,
+            size: 0,
+            isChecked: false 
+          });
+        }
       } else if (entry.isDirectory()) {
-        const subFiles = await readDirectory(fullPath);
+        const subFiles = await readDirectory(fullPath, includeContents);
         files.push(...subFiles.map(f => ({
           ...f,
           path: path.join(relativePath, f.path),
@@ -98,7 +147,8 @@ const readDirectory = async (dirPath) => {
  * @param {string} dirPath - Directory path
  */
 const updateDirectoryPrompt = debounce(async (id, dirPath) => {
-  const files = await readDirectory(dirPath);
+  // Only store metadata in the database, not file contents
+  const files = await readDirectory(dirPath, false);
   getPrompts((err, prompts) => {
     if (err) return console.error('Failed to fetch prompts:', err);
     const prompt = prompts.find(p => p.id === id);
@@ -129,7 +179,28 @@ app.get('/prompts', (req, res) => {
       console.error('Database error:', err.message);
       return res.status(500).json({ error: 'Failed to fetch prompts: ' + err.message });
     }
-    res.json(rows);
+    
+    // For directory prompts, only send metadata without file contents
+    const metadataRows = rows.map(prompt => {
+      if (prompt.isDirectory && Array.isArray(prompt.files)) {
+        // Remove content field from files to reduce payload size
+        const metadataFiles = prompt.files.map(file => {
+          const { content, ...metadata } = file;
+          return metadata;
+        });
+        return { ...prompt, files: metadataFiles };
+      }
+      return prompt;
+    });
+    
+    try {
+      res.json(metadataRows);
+    } catch (error) {
+      console.error('Error stringifying response:', error);
+      res.status(500).json({ 
+        error: 'Response too large. Please report this issue.' 
+      });
+    }
   });
 });
 
@@ -181,7 +252,8 @@ app.post('/directory', async (req, res) => {
   try {
     const resolvedPath = path.resolve(dirPath);
     await fs.access(resolvedPath);
-    const files = await readDirectory(resolvedPath);
+    // Only store metadata in the database, not file contents
+    const files = await readDirectory(resolvedPath, false);
     const dirName = path.basename(resolvedPath);
 
     createPrompt(dirName, resolvedPath, 'directory', true, files, (err, id) => {
@@ -264,6 +336,39 @@ app.delete('/directory/:id', (req, res) => {
 
       res.status(204).send();
     });
+  });
+});
+
+// Add a new endpoint to fetch file content on demand
+app.get('/directory/:id/file', (req, res) => {
+  const { id } = req.params;
+  const { filePath } = req.query;
+  
+  if (!filePath) {
+    return res.status(400).json({ error: 'File path is required' });
+  }
+  
+  getPrompts((err, prompts) => {
+    if (err) {
+      console.error('Database error:', err.message);
+      return res.status(500).json({ error: 'Failed to fetch prompts: ' + err.message });
+    }
+    
+    const prompt = prompts.find(p => p.id === parseInt(id));
+    if (!prompt || !prompt.isDirectory) {
+      return res.status(404).json({ error: 'Directory prompt not found' });
+    }
+    
+    // Read the file content directly from disk
+    const fullPath = path.join(prompt.content, filePath);
+    fs.readFile(fullPath, 'utf8')
+      .then(content => {
+        res.json({ content });
+      })
+      .catch(fileErr => {
+        console.error(`Error reading file ${filePath}:`, fileErr);
+        res.status(500).json({ error: `Failed to read file: ${fileErr.message}` });
+      });
   });
 });
 

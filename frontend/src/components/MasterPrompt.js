@@ -4,7 +4,7 @@
  *
  * @dependencies
  * - React
- * - Chakra UI (Box, Heading, Textarea, Button, Badge, HStack, Tooltip, VStack, Text)
+ * - Chakra UI (Box, Heading, Textarea, Button, Badge, HStack, Tooltip, VStack, Text, Spinner)
  * - @chakra-ui/toast (useToast) for toast notifications
  * - gpt-tokenizer: For accurate GPT token counting
  *
@@ -33,12 +33,21 @@ import {
   useToast,
   VStack,
   Text,
+  Spinner,
 } from '@chakra-ui/react';
 import { countTokens, getTokenColorScheme, DEFAULT_MAX_TOKENS } from '../utils/tokenizer';
 
 const MasterPrompt = ({ selectedPromptsText }) => {
   const [additionalInstructions, setAdditionalInstructions] = useState('');
+  const [isLoading, setIsLoading] = useState(false);
   const toast = useToast();
+  
+  // Track loading state based on whether selectedPromptsText is empty
+  useEffect(() => {
+    // If selectedPromptsText is empty but we expect content (based on previous state)
+    // then we're probably loading content
+    setIsLoading(selectedPromptsText === '' && isLoading);
+  }, [selectedPromptsText]);
   
   // Combine both texts for token counting and copying
   const combinedText = [selectedPromptsText, additionalInstructions]
@@ -53,55 +62,85 @@ const MasterPrompt = ({ selectedPromptsText }) => {
    * @description Copies the Master Prompt to the clipboard, then shows a success toast.
    */
   const handleCopy = () => {
-    navigator.clipboard.writeText(combinedText);
-    toast({
-      title: 'Copied!',
-      description: 'Master Prompt copied to clipboard.',
-      status: 'success',
-      duration: 2000,
-      isClosable: true,
-    });
+    navigator.clipboard.writeText(combinedText).then(
+      () => {
+        toast({
+          title: 'Copied to clipboard',
+          status: 'success',
+          duration: 2000,
+          isClosable: true,
+        });
+      },
+      (err) => {
+        console.error('Could not copy text: ', err);
+        toast({
+          title: 'Failed to copy',
+          description: err.message,
+          status: 'error',
+          duration: 3000,
+          isClosable: true,
+        });
+      }
+    );
   };
 
   return (
     <Box>
-      <Heading as="h2" size="md" mb={3}>
-        Master Prompt
-      </Heading>
-      <VStack spacing={3} align="stretch">
-        <Textarea
-          value={selectedPromptsText}
-          placeholder="Selected prompts will appear here..."
-          isReadOnly
-        />
-        <Textarea
-          value={additionalInstructions}
-          onChange={(e) => setAdditionalInstructions(e.target.value)}
-          placeholder="Write additional instructions here..."
-          size="md"
-          rows={1}
-        />
-        <HStack spacing={2}>
+      <HStack mb={2} justify="space-between">
+        <Heading as="h2" size="md">
+          Master Prompt
+        </Heading>
+        <HStack>
+          <Tooltip label={`${tokenCount} tokens out of ${DEFAULT_MAX_TOKENS} max`}>
+            <Badge colorScheme={colorScheme} variant="subtle">
+              {tokenCount} tokens
+            </Badge>
+          </Tooltip>
           <Button
+            size="sm"
             colorScheme="blue"
             onClick={handleCopy}
-            disabled={!combinedText}
+            isDisabled={!combinedText.trim() || isLoading}
           >
             Copy to Clipboard
           </Button>
-          <Tooltip 
-            label={`${((tokenCount / DEFAULT_MAX_TOKENS) * 100).toFixed(1)}% of maximum ${DEFAULT_MAX_TOKENS.toLocaleString()} tokens`}
-            placement="top"
-          >
-            <Badge 
-              colorScheme={colorScheme}
-              variant="subtle" 
-              fontSize="md"
-            >
-              {tokenCount.toLocaleString()} tokens
-            </Badge>
-          </Tooltip>
         </HStack>
+      </HStack>
+
+      <VStack spacing={3} align="stretch">
+        <Box position="relative">
+          <Textarea
+            value={selectedPromptsText}
+            readOnly
+            height="300px"
+            placeholder="Selected prompts will appear here..."
+            resize="vertical"
+          />
+          {isLoading && (
+            <Box 
+              position="absolute" 
+              top="0" 
+              left="0" 
+              right="0" 
+              bottom="0" 
+              display="flex" 
+              alignItems="center" 
+              justifyContent="center"
+              bg="rgba(255, 255, 255, 0.7)"
+            >
+              <Spinner size="xl" />
+              <Text ml={3}>Loading file contents...</Text>
+            </Box>
+          )}
+        </Box>
+        
+        <Textarea
+          value={additionalInstructions}
+          onChange={(e) => setAdditionalInstructions(e.target.value)}
+          placeholder="Add additional instructions here..."
+          size="sm"
+          rows={3}
+        />
       </VStack>
     </Box>
   );
