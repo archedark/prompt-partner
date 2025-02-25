@@ -253,9 +253,15 @@ function App() {
       const prompt = prompts.find(p => p.id === id);
       if (!prompt) return '';
       if (prompt.isDirectory) {
-        const checkedFiles = prompt.files.filter(f => f.isChecked);
+        // Filter out .git and .venv folders and their contents before processing
+        const filteredFiles = prompt.files.filter(file => {
+          const parts = file.path.split(/[\\/]/).filter(Boolean);
+          return !parts.includes('.git') && !parts.includes('.venv');
+        });
+        
+        const checkedFiles = filteredFiles.filter(f => f.isChecked);
         if (!checkedFiles.length && !selectedPrompts.includes(id)) return '';
-        const treeText = buildTreeText(prompt.files);
+        const treeText = buildTreeText(filteredFiles);
         const fileContents = checkedFiles
           .map(file => `\`\`\`${file.path}\n${file.content}\n\`\`\``)
           .join('\n');
