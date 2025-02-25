@@ -11,12 +11,14 @@
  *
  * @notes
  * - Mocks getPrompts and other API calls.
+ * - Uses renderWithChakra from setupTests.js to provide ChakraProvider context.
  * - Tests tag filtering with sample data.
  * - Includes repo integration tests for directory selection and prompt updates.
  */
 
 import React from 'react';
-import { render, screen, waitFor, fireEvent } from '@testing-library/react';
+import { screen, waitFor, fireEvent } from '@testing-library/react';
+import { renderWithChakra } from './setupTests'; // Import custom render
 import App from './App';
 import * as api from './api';
 
@@ -29,7 +31,7 @@ describe('<App />', () => {
 
   test('renders the main header', async () => {
     api.getPrompts.mockResolvedValueOnce([]);
-    render(<App />);
+    renderWithChakra(<App />);
     expect(screen.getByText(/Promptner/i)).toBeInTheDocument();
   });
 
@@ -37,7 +39,7 @@ describe('<App />', () => {
     api.getPrompts.mockResolvedValueOnce([
       { id: 101, name: 'Test Prompt', content: 'Test Content', tags: 'test' },
     ]);
-    render(<App />);
+    renderWithChakra(<App />);
     await waitFor(() => {
       expect(screen.getByText(/Test Prompt/i)).toBeInTheDocument();
     });
@@ -50,7 +52,7 @@ describe('<App />', () => {
       { id: 2, name: 'Writing Tutorial', content: 'Content 2', tags: 'writing' },
       { id: 3, name: 'Python Tips', content: 'Content 3', tags: 'coding, python' },
     ]);
-    render(<App />);
+    renderWithChakra(<App />);
     await waitFor(() => {
       expect(screen.getByText(/Coding Guide/i)).toBeInTheDocument();
     });
@@ -78,7 +80,7 @@ describe('<App />', () => {
       { id: 1, name: 'Coding Guide', content: 'Content 1', tags: 'TUTORIAL' },
       { id: 2, name: 'WRITING Tips', content: 'Content 2', tags: 'writing' },
     ]);
-    render(<App />);
+    renderWithChakra(<App />);
     await waitFor(() => {
       expect(screen.getByText(/Coding Guide/i)).toBeInTheDocument();
     });
@@ -97,7 +99,7 @@ describe('<App />', () => {
       { id: 1, name: 'Coding Guide', content: 'Content 1', tags: 'tutorial' },
       { id: 2, name: 'Writing Helper', content: 'Content 2', tags: 'write' },
     ]);
-    render(<App />);
+    renderWithChakra(<App />);
     await waitFor(() => {
       expect(screen.getByText(/Coding Guide/i)).toBeInTheDocument();
     });
@@ -116,7 +118,7 @@ describe('<App />', () => {
       { id: 1, name: 'C++ Guide', content: 'Content 1', tags: 'c++, programming' },
       { id: 2, name: 'Regular Guide', content: 'Content 2', tags: 'reg-ex' },
     ]);
-    render(<App />);
+    renderWithChakra(<App />);
     await waitFor(() => {
       expect(screen.getByText(/C\+\+ Guide/i)).toBeInTheDocument();
     });
@@ -134,7 +136,7 @@ describe('<App />', () => {
     api.getPrompts.mockResolvedValueOnce([
       { id: 1, name: 'Coding Guide', content: 'Content 1', tags: 'tutorial' },
     ]);
-    render(<App />);
+    renderWithChakra(<App />);
     await waitFor(() => {
       expect(screen.getByText(/Coding Guide/i)).toBeInTheDocument();
     });
@@ -151,7 +153,7 @@ describe('<App />', () => {
       { id: 1, name: 'Coding Guide', content: 'Content 1', tags: 'tutorial' },
       { id: 2, name: 'Writing Tips', content: 'Content 2', tags: 'writing' },
     ]);
-    render(<App />);
+    renderWithChakra(<App />);
     await waitFor(() => {
       expect(screen.getByText(/Coding Guide/i)).toBeInTheDocument();
     });
@@ -178,7 +180,7 @@ describe('<App />', () => {
 
     test('sends directory path to backend on selection', async () => {
       api.getPrompts.mockResolvedValueOnce([]);
-      render(<App />);
+      renderWithChakra(<App />);
       await waitFor(() => {
         expect(screen.getByText(/Promptner/i)).toBeInTheDocument();
       });
@@ -210,7 +212,7 @@ describe('<App />', () => {
         .mockResolvedValueOnce([]) // Initial fetch
         .mockResolvedValueOnce([directoryPrompt]); // After directory selection
 
-      render(<App />);
+      renderWithChakra(<App />);
       await waitFor(() => {
         expect(screen.getByText(/Promptner/i)).toBeInTheDocument();
       });

@@ -11,6 +11,7 @@
  * - PromptList: Component under test
  *
  * @notes
+ * - Uses renderWithChakra from setupTests.js to provide ChakraProvider context.
  * - Mocks callback props to verify calls.
  * - Tests empty prompt list vs. populated list.
  * - Includes tests for Clear Selection Button visibility and functionality.
@@ -19,7 +20,8 @@
  */
 
 import React from 'react';
-import { render, screen, fireEvent } from '@testing-library/react';
+import { screen, fireEvent } from '@testing-library/react';
+import { renderWithChakra } from '../../setupTests'; // Import custom render
 import PromptList from '../PromptList';
 
 describe('<PromptList />', () => {
@@ -51,7 +53,7 @@ describe('<PromptList />', () => {
   });
 
   test('renders "No prompts found" when prompts array is empty', () => {
-    render(
+    renderWithChakra(
       <PromptList
         prompts={[]}
         selectedPrompts={[]}
@@ -64,7 +66,7 @@ describe('<PromptList />', () => {
   });
 
   test('renders prompt list and checks default states', () => {
-    render(
+    renderWithChakra(
       <PromptList
         prompts={samplePrompts}
         selectedPrompts={[]}
@@ -84,7 +86,7 @@ describe('<PromptList />', () => {
   });
 
   test('selecting a prompt calls onSelectPrompt with its ID', () => {
-    render(
+    renderWithChakra(
       <PromptList
         prompts={samplePrompts}
         selectedPrompts={[]}
@@ -100,7 +102,7 @@ describe('<PromptList />', () => {
   });
 
   test('delete button calls onDeletePrompt with prompt ID', () => {
-    render(
+    renderWithChakra(
       <PromptList
         prompts={samplePrompts}
         selectedPrompts={[]}
@@ -116,7 +118,7 @@ describe('<PromptList />', () => {
   });
 
   test('edit button calls onEditPromptClick with prompt data', () => {
-    render(
+    renderWithChakra(
       <PromptList
         prompts={samplePrompts}
         selectedPrompts={[]}
@@ -138,7 +140,7 @@ describe('<PromptList />', () => {
 
   describe('Clear Selection Button', () => {
     test('shows clear selection button only when prompts are selected', () => {
-      render(
+      renderWithChakra(
         <PromptList
           prompts={samplePrompts}
           selectedPrompts={[]}
@@ -150,7 +152,7 @@ describe('<PromptList />', () => {
       );
       expect(screen.queryByText(/Clear Selections/i)).not.toBeInTheDocument();
 
-      render(
+      renderWithChakra(
         <PromptList
           prompts={samplePrompts}
           selectedPrompts={[1]}
@@ -164,7 +166,7 @@ describe('<PromptList />', () => {
     });
 
     test('clears all selected prompts when clicked', () => {
-      render(
+      renderWithChakra(
         <PromptList
           prompts={samplePrompts}
           selectedPrompts={[1, 2]}
@@ -183,7 +185,7 @@ describe('<PromptList />', () => {
 
   describe('Expandable Prompt List', () => {
     test('renders prompts in collapsed state by default', () => {
-      render(
+      renderWithChakra(
         <PromptList
           prompts={samplePrompts}
           selectedPrompts={[]}
@@ -204,7 +206,7 @@ describe('<PromptList />', () => {
     });
 
     test('expands prompt to show full content and tags on toggle', () => {
-      render(
+      renderWithChakra(
         <PromptList
           prompts={samplePrompts}
           selectedPrompts={[]}
@@ -224,7 +226,7 @@ describe('<PromptList />', () => {
     });
 
     test('collapses all prompts when Collapse All is clicked', () => {
-      render(
+      renderWithChakra(
         <PromptList
           prompts={samplePrompts}
           selectedPrompts={[]}
@@ -259,7 +261,7 @@ describe('<PromptList />', () => {
     };
 
     test('displays directory prompt in collapsed state by default', () => {
-      render(
+      renderWithChakra(
         <PromptList
           prompts={[directoryPrompt]}
           selectedPrompts={[]}
@@ -281,7 +283,7 @@ describe('<PromptList />', () => {
     });
 
     test('expands directory prompt to show file tree excluding ignored files', () => {
-      render(
+      renderWithChakra(
         <PromptList
           prompts={[directoryPrompt]}
           selectedPrompts={[]}
@@ -304,7 +306,7 @@ describe('<PromptList />', () => {
     });
 
     test('toggles file checkbox independently of directory selection', () => {
-      render(
+      renderWithChakra(
         <PromptList
           prompts={[directoryPrompt]}
           selectedPrompts={[]}
@@ -326,7 +328,7 @@ describe('<PromptList />', () => {
     });
 
     test('maintains file checkbox state after collapsing and re-expanding', () => {
-      render(
+      renderWithChakra(
         <PromptList
           prompts={[directoryPrompt]}
           selectedPrompts={[]}
@@ -349,7 +351,7 @@ describe('<PromptList />', () => {
       expect(mockOnToggleExpand).toHaveBeenCalledWith(3);
 
       // Re-render with updated state from backend (simulated)
-      render(
+      renderWithChakra(
         <PromptList
           prompts={[{ ...directoryPrompt, files: directoryPrompt.files.map(f => f.path === 'src/index.js' ? { ...f, isChecked: true } : f) }]}
           selectedPrompts={[]}
@@ -365,7 +367,7 @@ describe('<PromptList />', () => {
       );
 
       fireEvent.click(screen.getByLabelText(/Expand Prompt/i));
-      render(
+      renderWithChakra(
         <PromptList
           prompts={[{ ...directoryPrompt, files: directoryPrompt.files.map(f => f.path === 'src/index.js' ? { ...f, isChecked: true } : f) }]}
           selectedPrompts={[]}
@@ -385,7 +387,7 @@ describe('<PromptList />', () => {
     });
 
     test('clears directory selection but not file checkboxes when Clear Selections is clicked', () => {
-      render(
+      renderWithChakra(
         <PromptList
           prompts={[{ ...directoryPrompt, files: [{ ...directoryPrompt.files[0], isChecked: true }, ...directoryPrompt.files.slice(1)] }]}
           selectedPrompts={[3]}
@@ -409,7 +411,7 @@ describe('<PromptList />', () => {
       expect(mockOnClearSelections).toHaveBeenCalledTimes(1);
 
       // Re-render with cleared selection
-      render(
+      renderWithChakra(
         <PromptList
           prompts={[{ ...directoryPrompt, files: [{ ...directoryPrompt.files[0], isChecked: true }, ...directoryPrompt.files.slice(1)] }]}
           selectedPrompts={[]}
