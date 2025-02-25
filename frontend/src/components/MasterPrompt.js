@@ -4,7 +4,7 @@
  *
  * @dependencies
  * - React
- * - Chakra UI (Box, Heading, Textarea, Button, Badge, HStack, Tooltip)
+ * - Chakra UI (Box, Heading, Textarea, Button, Badge, HStack, Tooltip, VStack, Text)
  * - @chakra-ui/toast (useToast) for toast notifications
  * - gpt-tokenizer: For accurate GPT token counting
  *
@@ -21,7 +21,7 @@
  *   - Formatting: Delineate file contents with markdown-style code blocks (e.g., ```filename\ncontent\n```), matching the prompt file's delineation style.
  */
 
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import {
   Box,
   Heading,
@@ -31,12 +31,21 @@ import {
   HStack,
   Tooltip,
   useToast,
+  VStack,
+  Text,
 } from '@chakra-ui/react';
 import { countTokens, getTokenColorScheme, DEFAULT_MAX_TOKENS } from '../utils/tokenizer';
 
 const MasterPrompt = ({ selectedPromptsText }) => {
+  const [additionalInstructions, setAdditionalInstructions] = useState('');
   const toast = useToast();
-  const tokenCount = countTokens(selectedPromptsText);
+  
+  // Combine both texts for token counting and copying
+  const combinedText = [selectedPromptsText, additionalInstructions]
+    .filter(Boolean)
+    .join('\n\n');
+  
+  const tokenCount = countTokens(combinedText);
   const colorScheme = getTokenColorScheme(tokenCount);
 
   /**
@@ -44,7 +53,7 @@ const MasterPrompt = ({ selectedPromptsText }) => {
    * @description Copies the Master Prompt to the clipboard, then shows a success toast.
    */
   const handleCopy = () => {
-    navigator.clipboard.writeText(selectedPromptsText);
+    navigator.clipboard.writeText(combinedText);
     toast({
       title: 'Copied!',
       description: 'Master Prompt copied to clipboard.',
@@ -59,33 +68,41 @@ const MasterPrompt = ({ selectedPromptsText }) => {
       <Heading as="h2" size="md" mb={3}>
         Master Prompt
       </Heading>
-      <Textarea
-        value={selectedPromptsText}
-        placeholder="Selected prompts will appear here..."
-        isReadOnly
-        mb={2}
-      />
-      <HStack spacing={2}>
-        <Button
-          colorScheme="blue"
-          onClick={handleCopy}
-          disabled={!selectedPromptsText}
-        >
-          Copy to Clipboard
-        </Button>
-        <Tooltip 
-          label={`${((tokenCount / DEFAULT_MAX_TOKENS) * 100).toFixed(1)}% of maximum ${DEFAULT_MAX_TOKENS.toLocaleString()} tokens`}
-          placement="top"
-        >
-          <Badge 
-            colorScheme={colorScheme}
-            variant="subtle" 
-            fontSize="md"
+      <VStack spacing={3} align="stretch">
+        <Textarea
+          value={selectedPromptsText}
+          placeholder="Selected prompts will appear here..."
+          isReadOnly
+        />
+        <Textarea
+          value={additionalInstructions}
+          onChange={(e) => setAdditionalInstructions(e.target.value)}
+          placeholder="Write additional instructions here..."
+          size="md"
+          rows={1}
+        />
+        <HStack spacing={2}>
+          <Button
+            colorScheme="blue"
+            onClick={handleCopy}
+            disabled={!combinedText}
           >
-            {tokenCount.toLocaleString()} tokens
-          </Badge>
-        </Tooltip>
-      </HStack>
+            Copy to Clipboard
+          </Button>
+          <Tooltip 
+            label={`${((tokenCount / DEFAULT_MAX_TOKENS) * 100).toFixed(1)}% of maximum ${DEFAULT_MAX_TOKENS.toLocaleString()} tokens`}
+            placement="top"
+          >
+            <Badge 
+              colorScheme={colorScheme}
+              variant="subtle" 
+              fontSize="md"
+            >
+              {tokenCount.toLocaleString()} tokens
+            </Badge>
+          </Tooltip>
+        </HStack>
+      </VStack>
     </Box>
   );
 };

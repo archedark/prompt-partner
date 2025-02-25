@@ -1,49 +1,27 @@
 /**
  * @file tokenizer.js
- * @description Provides consistent token counting and color coding functions using OpenAI's tiktoken
+ * @description Provides consistent token counting and color coding functions using gpt-tokenizer
  */
 
-import { get_encoding } from 'tiktoken';
+import { encode } from 'gpt-tokenizer';
 
 // Default maximum tokens (can be configured via settings later)
 export const DEFAULT_MAX_TOKENS = 128 * 1024; // 128k tokens
 
-// Initialize the tokenizer with GPT-4's encoding
-let tokenizer = null;
-
 /**
- * Lazy initialization of the tokenizer to avoid unnecessary loading
- * @returns {Tiktoken} The tokenizer instance
- */
-const getTokenizer = () => {
-  if (!tokenizer) {
-    try {
-      tokenizer = get_encoding('cl100k_base'); // GPT-4's encoding
-    } catch (error) {
-      console.error('Failed to initialize tokenizer:', error);
-      return null;
-    }
-  }
-  return tokenizer;
-};
-
-/**
- * Counts tokens in text using OpenAI's tiktoken
+ * Counts tokens in text using gpt-tokenizer (browser-compatible)
  * @param {string} text - The text to count tokens in
  * @returns {number} The number of tokens
  */
 export const countTokens = (text) => {
   if (!text) return 0;
   
-  const encoder = getTokenizer();
-  if (!encoder) return text.split(/\s+/).length; // Fallback to word count if tokenizer fails
-  
   try {
-    const tokens = encoder.encode(text);
+    const tokens = encode(text);
     return tokens.length;
   } catch (error) {
     console.error('Error counting tokens:', error);
-    return text.split(/\s+/).length; // Fallback to word count
+    throw new Error('Token counting failed. This is required for the application to work correctly.');
   }
 };
 
