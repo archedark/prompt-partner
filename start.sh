@@ -7,6 +7,7 @@ echo -e "\033]0;Promptner Startup Script\007"
 GREEN='\033[0;32m'
 RED='\033[0;31m'
 YELLOW='\033[1;33m'
+BLUE='\033[0;34m'
 NC='\033[0m' # No Color
 
 # Check if Node.js is installed
@@ -39,28 +40,52 @@ check_port 5001 || exit 1  # Backend port
 
 echo -e "${GREEN}Starting Promptner servers...${NC}"
 
+# Check if dependencies need to be installed
+BACKEND_DEPS_NEEDED=0
+FRONTEND_DEPS_NEEDED=0
+
+if [ ! -d "backend/node_modules" ]; then
+    BACKEND_DEPS_NEEDED=1
+fi
+
+if [ ! -d "frontend/node_modules" ]; then
+    FRONTEND_DEPS_NEEDED=1
+fi
+
+# Install dependencies only if needed
+if [ $BACKEND_DEPS_NEEDED -eq 1 ]; then
+    echo -e "${BLUE}Installing backend dependencies...${NC}"
+    (cd backend && npm ci --no-audit --no-fund)
+    if [ $? -ne 0 ]; then
+        echo -e "${RED}Failed to install backend dependencies.${NC}"
+        exit 1
+    fi
+fi
+
+if [ $FRONTEND_DEPS_NEEDED -eq 1 ]; then
+    echo -e "${BLUE}Installing frontend dependencies...${NC}"
+    (cd frontend && npm ci --no-audit --no-fund)
+    if [ $? -ne 0 ]; then
+        echo -e "${RED}Failed to install frontend dependencies.${NC}"
+        exit 1
+    fi
+fi
+
+# Start both servers in parallel
+echo -e "${YELLOW}Starting backend and frontend servers simultaneously...${NC}"
+
 # Start backend server
-echo -e "${YELLOW}Starting backend server...${NC}"
-cd backend && \
-echo "Installing backend dependencies..." && \
-npm install && \
-echo "Starting backend server..." && \
-npm start &
+(cd backend && npm start) &
+BACKEND_PID=$!
 
-# Wait a moment before starting frontend
-sleep 5
-
-# Start frontend server
-echo -e "${YELLOW}Starting frontend server...${NC}"
-cd ../frontend && \
-echo "Installing frontend dependencies..." && \
-npm install && \
-echo "Starting frontend server..." && \
-npm start &
+# Start frontend server (no waiting)
+(cd frontend && npm start) &
+FRONTEND_PID=$!
 
 echo -e "${GREEN}Servers are starting. Please wait...${NC}"
 echo -e "${YELLOW}Frontend will be available at http://localhost:3001${NC}"
 echo -e "${YELLOW}Backend will be available at http://localhost:5001${NC}"
 
-# Keep the script running
+# Keep the script running but allow for clean shutdown with Ctrl+C
+trap "kill $BACKEND_PID $FRONTEND_PID; exit" INT
 wait 

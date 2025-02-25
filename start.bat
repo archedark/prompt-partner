@@ -24,36 +24,50 @@ for /f "tokens=5" %%a in ('netstat -ano ^| findstr :5001') do (
 
 echo Starting Promptner servers...
 
-:: Start backend server
-echo Starting backend server...
-cd backend
-echo Installing backend dependencies... >> %LOGFILE%
-call npm install >> %LOGFILE% 2>&1
-if errorlevel 1 (
-    echo Failed to install backend dependencies. Check %LOGFILE% for details.
+:: Check if node_modules exists to avoid reinstalling dependencies
+set BACKEND_DEPS_NEEDED=0
+set FRONTEND_DEPS_NEEDED=0
+
+if not exist "backend\node_modules" set BACKEND_DEPS_NEEDED=1
+if not exist "frontend\node_modules" set FRONTEND_DEPS_NEEDED=1
+
+:: Install dependencies if needed (only once)
+if %BACKEND_DEPS_NEEDED%==1 (
+    echo Installing backend dependencies...
+    cd backend
+    call npm ci --no-audit --no-fund >> %LOGFILE% 2>&1
+    if errorlevel 1 (
+        echo Failed to install backend dependencies. Check %LOGFILE% for details.
+        cd ..
+        pause
+        exit /b 1
+    )
     cd ..
-    pause
-    exit /b 1
 )
-echo Starting backend server... >> %LOGFILE%
+
+if %FRONTEND_DEPS_NEEDED%==1 (
+    echo Installing frontend dependencies...
+    cd frontend
+    call npm ci --no-audit --no-fund >> %LOGFILE% 2>&1
+    if errorlevel 1 (
+        echo Failed to install frontend dependencies. Check %LOGFILE% for details.
+        cd ..
+        pause
+        exit /b 1
+    )
+    cd ..
+)
+
+:: Start both servers in parallel
+echo Starting backend and frontend servers...
+
+:: Start backend server
+cd backend
 start "Promptner Backend" cmd /k "npm start >> %LOGFILE% 2>&1"
 cd ..
 
-:: Wait a moment before starting frontend
-timeout /t 5 /nobreak > nul
-
-:: Start frontend server
-echo Starting frontend server...
+:: Start frontend server (no need to wait)
 cd frontend
-echo Installing frontend dependencies... >> %LOGFILE%
-call npm install >> %LOGFILE% 2>&1
-if errorlevel 1 (
-    echo Failed to install frontend dependencies. Check %LOGFILE% for details.
-    cd ..
-    pause
-    exit /b 1
-)
-echo Starting frontend server... >> %LOGFILE%
 start "Promptner Frontend" cmd /k "npm start >> %LOGFILE% 2>&1"
 cd ..
 
