@@ -79,6 +79,15 @@ const readDirectory = async (dirPath, includeContents = true) => {
     ]);
 
     const files = [];
+    
+    // Check if directory exists before trying to read it
+    try {
+      await fs.access(dirPath);
+    } catch (err) {
+      console.error(`Directory no longer exists: ${dirPath}`);
+      return files; // Return empty array if directory doesn't exist
+    }
+    
     const entries = await fs.readdir(dirPath, { withFileTypes: true });
 
     for (const entry of entries) {
@@ -92,6 +101,15 @@ const readDirectory = async (dirPath, includeContents = true) => {
       
       // Skip if the file or directory matches a .gitignore pattern
       if (ig.ignores(relativePath)) continue;
+
+      // Check if file/directory still exists before processing
+      try {
+        await fs.access(fullPath);
+      } catch (err) {
+        // Skip this file/directory if it no longer exists
+        console.log(`Skipping deleted file/directory: ${relativePath}`);
+        continue;
+      }
 
       if (entry.isFile()) {
         try {
@@ -113,26 +131,29 @@ const readDirectory = async (dirPath, includeContents = true) => {
               fileObj.content = content;
             } catch (readErr) {
               console.error(`Error reading file ${relativePath}:`, readErr);
-              fileObj.content = `[Error reading file: ${readErr.message}]`;
+              // Skip this file if it can't be read (likely deleted)
+              continue;
             }
           }
           
           files.push(fileObj);
         } catch (fileErr) {
+          // Skip this file if it can't be processed (likely deleted)
           console.error(`Error processing file ${relativePath}:`, fileErr);
-          files.push({ 
-            path: relativePath, 
-            error: fileErr.message,
-            size: 0,
-            isChecked: false 
-          });
+          continue;
         }
       } else if (entry.isDirectory()) {
-        const subFiles = await readDirectory(fullPath, includeContents);
-        files.push(...subFiles.map(f => ({
-          ...f,
-          path: path.join(relativePath, f.path),
-        })));
+        try {
+          const subFiles = await readDirectory(fullPath, includeContents);
+          files.push(...subFiles.map(f => ({
+            ...f,
+            path: path.join(relativePath, f.path),
+          })));
+        } catch (dirErr) {
+          // Skip this directory if it can't be processed (likely deleted)
+          console.error(`Error processing directory ${relativePath}:`, dirErr);
+          continue;
+        }
       }
     }
     return files;
@@ -149,16 +170,55 @@ const readDirectory = async (dirPath, includeContents = true) => {
  * @param {string} dirPath - Directory path
  */
 const updateDirectoryPrompt = debounce(async (id, dirPath) => {
-  // Only store metadata in the database, not file contents
-  const files = await readDirectory(dirPath, false);
-  getPrompts((err, prompts) => {
-    if (err) return console.error('Failed to fetch prompts:', err);
-    const prompt = prompts.find(p => p.id === id);
-    if (!prompt) return;
-    updatePrompt(id, prompt.name, dirPath, prompt.tags, files, (updateErr) => {
-      if (updateErr) console.error('Failed to update directory prompt:', updateErr);
+  console.log(`Updating directory prompt ${id} for path ${dirPath}`);
+  
+  try {
+    // Get the current prompt data first to preserve checked states
+    getPrompts((err, prompts) => {
+      if (err) {
+        console.error('Failed to fetch prompts:', err);
+        return;
+      }
+      
+      const prompt = prompts.find(p => p.id === id);
+      if (!prompt) {
+        console.error(`Prompt with ID ${id} not found`);
+        return;
+      }
+      
+      // Create a map of existing files with their checked states
+      const existingFileMap = {};
+      if (prompt.files && Array.isArray(prompt.files)) {
+        prompt.files.forEach(file => {
+          existingFileMap[file.path] = file.isChecked;
+        });
+      }
+      
+      // Read the current directory state
+      readDirectory(dirPath, false)
+        .then(newFiles => {
+          // Preserve checked state for files that still exist
+          const updatedFiles = newFiles.map(file => ({
+            ...file,
+            isChecked: existingFileMap[file.path] === true
+          }));
+          
+          // Update the prompt with the new file list
+          updatePrompt(id, prompt.name, dirPath, prompt.tags, updatedFiles, (updateErr) => {
+            if (updateErr) {
+              console.error('Failed to update directory prompt:', updateErr);
+            } else {
+              console.log(`Successfully updated directory prompt ${id} with ${updatedFiles.length} files`);
+            }
+          });
+        })
+        .catch(readErr => {
+          console.error(`Error reading directory ${dirPath}:`, readErr);
+        });
     });
-  });
+  } catch (error) {
+    console.error(`Error in updateDirectoryPrompt for ${id}:`, error);
+  }
 }, 1000);
 
 app.post('/prompts', (req, res) => {
@@ -264,10 +324,43 @@ app.post('/directory', async (req, res) => {
         return res.status(500).json({ error: 'Failed to create directory prompt: ' + err.message });
       }
 
-      const watcher = fs.watch(resolvedPath, { recursive: true }, () => {
-        updateDirectoryPrompt(id, resolvedPath);
-      });
-      watchers.set(id, watcher);
+      // Use fs.watch with explicit event handling
+      try {
+        const watcher = fs.watch(resolvedPath, { recursive: true }, (eventType, filename) => {
+          console.log(`File system event: ${eventType} - ${filename}`);
+          // Trigger update regardless of event type (change, rename, etc.)
+          updateDirectoryPrompt(id, resolvedPath);
+        });
+        
+        // Handle watcher errors
+        watcher.on('error', (error) => {
+          console.error(`Watcher error for directory ${resolvedPath}:`, error);
+          // Try to recreate the watcher if it fails
+          if (watchers.has(id)) {
+            try {
+              watchers.get(id).close();
+            } catch (closeErr) {
+              console.error('Error closing watcher:', closeErr);
+            }
+            
+            try {
+              const newWatcher = fs.watch(resolvedPath, { recursive: true }, () => {
+                updateDirectoryPrompt(id, resolvedPath);
+              });
+              watchers.set(id, newWatcher);
+              console.log(`Recreated watcher for directory ${resolvedPath}`);
+            } catch (recreateErr) {
+              console.error(`Failed to recreate watcher for ${resolvedPath}:`, recreateErr);
+            }
+          }
+        });
+        
+        watchers.set(id, watcher);
+        console.log(`Started watching directory: ${resolvedPath}`);
+      } catch (watchErr) {
+        console.error(`Error setting up watcher for ${resolvedPath}:`, watchErr);
+        // Continue even if watcher setup fails - we'll rely on polling
+      }
 
       res.status(201).json({ id });
     });
@@ -402,8 +495,36 @@ app.get('/directory/:id/file', (req, res) => {
       })
       .catch(fileErr => {
         console.error(`Error reading file ${filePath}:`, fileErr);
+        // Return 404 status for missing files
+        if (fileErr.code === 'ENOENT') {
+          return res.status(404).json({ error: 'File not found', code: 'ENOENT' });
+        }
+        // Return 500 for other errors
         res.status(500).json({ error: `Failed to read file: ${fileErr.message}` });
       });
+  });
+});
+
+// Add a new endpoint to manually refresh a directory
+app.post('/directory/:id/refresh', (req, res) => {
+  const { id } = req.params;
+  const promptId = parseInt(id);
+  
+  getPrompts((err, prompts) => {
+    if (err) {
+      console.error('Database error:', err.message);
+      return res.status(500).json({ error: 'Failed to fetch prompts: ' + err.message });
+    }
+    
+    const prompt = prompts.find(p => p.id === promptId);
+    if (!prompt || !prompt.isDirectory) {
+      return res.status(404).json({ error: 'Directory prompt not found' });
+    }
+    
+    // Call the updateDirectoryPrompt function to refresh the directory
+    updateDirectoryPrompt(promptId, prompt.content);
+    
+    res.status(200).json({ message: 'Directory refresh initiated' });
   });
 });
 

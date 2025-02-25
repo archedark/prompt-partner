@@ -60,6 +60,11 @@ const FileTree = ({
     return 'some';
   }, [files]);
 
+  // Generate a unique key based on the files array to force re-render when files change
+  const filesKey = useMemo(() => {
+    return files ? `files-${files.length}-${Date.now()}` : 'no-files';
+  }, [files]);
+
   /**
    * @function handleSelectAll
    * @description Selects or deselects all files based on current state
@@ -213,7 +218,7 @@ const FileTree = ({
   const tree = buildTree(files);
 
   return (
-    <Box p={2}>
+    <Box p={2} key={filesKey}>
       {/* Select/Deselect All Button */}
       <HStack mb={2} spacing={2}>
         <Tooltip 

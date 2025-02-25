@@ -48,16 +48,19 @@ function App() {
   const [tagFilter, setTagFilter] = useState('');
   const [expandedStates, setExpandedStates] = useState({});
   const [isModalOpen, setIsModalOpen] = useState(false);
+  const [refreshInterval, setRefreshInterval] = useState(null);
   const toast = useToast();
 
   const flexDirection = useBreakpointValue({ base: 'column', md: 'row' });
 
-  useEffect(() => {
-    const fetchPrompts = async () => {
-      try {
-        const data = await getPrompts();
-        setPrompts(data);
-      } catch (error) {
+  const fetchPrompts = async () => {
+    try {
+      const data = await getPrompts();
+      setPrompts(data);
+    } catch (error) {
+      console.error('Error fetching prompts:', error);
+      // Only show toast on initial load, not during background refreshes
+      if (!refreshInterval) {
         toast({
           title: 'Error Fetching Prompts',
           description: error.message,
@@ -66,8 +69,30 @@ function App() {
           isClosable: true,
         });
       }
-    };
+    }
+  };
+  
+  // Function to refresh prompts that can be called after a directory refresh
+  const refreshPrompts = async () => {
+    try {
+      await fetchPrompts();
+    } catch (error) {
+      console.error('Error refreshing prompts:', error);
+    }
+  };
+
+  // Initial fetch on component mount
+  useEffect(() => {
     fetchPrompts();
+    
+    // Remove the polling mechanism since we're using manual refresh now
+    // The polling is no longer needed as users will refresh directories manually
+    
+    return () => {
+      if (refreshInterval) {
+        clearInterval(refreshInterval);
+      }
+    };
   }, []);
 
   const handleAddPrompt = async (name, content, tags) => {
@@ -307,13 +332,19 @@ function App() {
             return `\`\`\`${file.path}\n${content}\n\`\`\``;
           } catch (error) {
             console.error(`Error fetching content for ${file.path}:`, error);
+            // Skip deleted files (404 errors) instead of showing error message
+            if (error.status === 404 || (error.message && error.message.includes('404'))) {
+              return null; // Return null for deleted files
+            }
             return `\`\`\`${file.path}\n[Error loading content: ${error.message}]\n\`\`\``;
           }
         });
         
         // Wait for all file contents to be fetched
         const fileContents = await Promise.all(fileContentsPromises);
-        return `Directory Tree (${prompt.name}):\n${treeText}\n${fileContents.join('\n')}`.trim();
+        // Filter out null values (deleted files)
+        const validFileContents = fileContents.filter(content => content !== null);
+        return `Directory Tree (${prompt.name}):\n${treeText}\n${validFileContents.join('\n')}`.trim();
       }
       
       return prompt.content;
@@ -335,6 +366,7 @@ function App() {
     };
     
     updateMasterPrompt();
+    // Include prompts in the dependency array to ensure updates when files change
   }, [selectedPrompts, selectedPromptOrder, prompts]);
 
   return (
@@ -380,6 +412,7 @@ function App() {
             onCollapseAll={handleCollapseAll}
             onFileCheckboxChange={handleFileCheckboxChange}
             onBulkFileCheckboxChange={handleBulkFileCheckboxChange}
+            onRefreshPrompts={refreshPrompts}
           />
         </Box>
 

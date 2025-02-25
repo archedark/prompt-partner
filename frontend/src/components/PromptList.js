@@ -23,10 +23,12 @@
  * - onCollapseAll: Function to collapse all prompts
  * - onFileCheckboxChange: Function to toggle file checkbox state in directory prompts
  * - onBulkFileCheckboxChange: Function to toggle bulk file checkbox state in directory prompts
+ * - onRefreshPrompts: Function to refresh prompts after directory refresh
  *
  * @notes
  * - Added recursive file tree rendering with collapsible states via FileTree component.
  * - Maintains separate expanded states for prompts and file tree nodes.
+ * - Added refresh button for directory prompts to manually update file list.
  */
 import React, { useState } from 'react';
 import {
@@ -47,9 +49,11 @@ import {
   ChevronDownIcon, 
   ChevronUpIcon,
   CopyIcon,
+  RepeatIcon,
 } from '@chakra-ui/icons';
 import { countTokens, getTokenColorScheme } from '../utils/tokenizer';
 import FileTree from './FileTree';
+import { refreshDirectoryPrompt } from '../api';
 
 const PromptList = ({
   prompts,
@@ -63,9 +67,11 @@ const PromptList = ({
   onCollapseAll,
   onFileCheckboxChange,
   onBulkFileCheckboxChange,
+  onRefreshPrompts,
 }) => {
   const toast = useToast();
   const [expandedFileStates, setExpandedFileStates] = useState({});
+  const [refreshingDirectories, setRefreshingDirectories] = useState({});
 
   const handleCopyPrompt = async (content, name) => {
     try {
@@ -92,6 +98,40 @@ const PromptList = ({
 
   const handleCollapseAllFiles = () => {
     setExpandedFileStates({});
+  };
+
+  const handleRefreshDirectory = async (promptId) => {
+    if (refreshingDirectories[promptId]) return; // Prevent multiple refreshes
+    
+    setRefreshingDirectories(prev => ({ ...prev, [promptId]: true }));
+    
+    try {
+      await refreshDirectoryPrompt(promptId);
+      toast({
+        title: 'Directory Refreshed',
+        description: 'The directory files are being updated.',
+        status: 'success',
+        duration: 2000,
+        isClosable: true,
+      });
+      
+      // Fetch updated prompts after a short delay to allow backend processing
+      setTimeout(async () => {
+        if (onRefreshPrompts) {
+          await onRefreshPrompts();
+        }
+        setRefreshingDirectories(prev => ({ ...prev, [promptId]: false }));
+      }, 1000);
+    } catch (error) {
+      toast({
+        title: 'Refresh Failed',
+        description: error.message,
+        status: 'error',
+        duration: 3000,
+        isClosable: true,
+      });
+      setRefreshingDirectories(prev => ({ ...prev, [promptId]: false }));
+    }
   };
 
   return (
@@ -147,6 +187,16 @@ const PromptList = ({
                     >
                       {countTokens(prompt.content)} tokens
                     </Badge>
+                  )}
+                  {prompt.isDirectory && (
+                    <IconButton
+                      aria-label="Refresh Directory"
+                      icon={<RepeatIcon />}
+                      size="sm"
+                      isLoading={refreshingDirectories[prompt.id]}
+                      onClick={() => handleRefreshDirectory(prompt.id)}
+                      title="Refresh directory files"
+                    />
                   )}
                   <IconButton
                     aria-label={isExpanded ? 'Collapse Prompt' : 'Expand Prompt'}

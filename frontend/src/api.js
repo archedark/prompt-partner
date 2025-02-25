@@ -189,12 +189,43 @@ export const getFileContent = async (directoryId, filePath) => {
     const response = await fetch(
       `${API_URL}/directory/${directoryId}/file?filePath=${encodeURIComponent(filePath)}`
     );
+    
     if (!response.ok) {
       const errorData = await response.json();
-      throw new Error(errorData.error || 'Failed to fetch file content');
+      // Create a custom error with status code information
+      const error = new Error(errorData.error || 'Failed to fetch file content');
+      error.status = response.status;
+      error.code = errorData.code;
+      throw error;
     }
+    
     const data = await response.json();
     return data.content;
+  } catch (error) {
+    console.error('API error:', error.message);
+    throw error;
+  }
+};
+
+/**
+ * @function refreshDirectoryPrompt
+ * @description Manually triggers a refresh of a directory prompt
+ * @param {number} directoryId - Directory prompt ID
+ * @returns {Promise<void>}
+ */
+export const refreshDirectoryPrompt = async (directoryId) => {
+  try {
+    const response = await fetch(`${API_URL}/directory/${directoryId}/refresh`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' }
+    });
+    
+    if (!response.ok) {
+      const errorData = await response.json();
+      throw new Error(errorData.error || 'Failed to refresh directory');
+    }
+    
+    return await response.json();
   } catch (error) {
     console.error('API error:', error.message);
     throw error;
