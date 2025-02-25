@@ -38,6 +38,9 @@ startup.log
 
 # Testing
 /coverage
+test-output.txt
+test-output-frontend.txt
+test-output-backend.txt
 
 # Runtime data
 pids
