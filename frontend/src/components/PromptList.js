@@ -200,8 +200,8 @@ const PromptList = ({
                       {prompt.content}
                     </Text>
                   )}
-                  {prompt.tags && !prompt.isDirectory && (
-                    <Text color="gray.600" fontSize="sm" noOfLines={isExpanded ? undefined : 1}>
+                  {prompt.tags && (
+                    <Text color="gray.600" fontSize="sm" noOfLines={isExpanded ? undefined : 1} mt={2}>
                       Tags: {prompt.tags}
                     </Text>
                   )}
