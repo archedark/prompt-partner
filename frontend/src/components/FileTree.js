@@ -18,6 +18,7 @@
  * - Builds a tree from flat file paths by splitting and nesting.
  * - Supports recursive expansion/collapse of directories.
  * - Assumes backend excludes `.gitignore` contents; displays only provided files.
+ * - Fixed bug where folders were rendered as files by ensuring directory structure is preserved.
  */
 import React from 'react';
 import {
@@ -38,10 +39,10 @@ const FileTree = ({ files, promptId, onFileCheckboxChange, expandedStates, onTog
    * @returns {Object} Nested tree with directories and files
    */
   const buildTree = (fileList) => {
-    const tree = { name: '', children: [], files: [] };
+    const tree = { name: '', children: {}, files: [] };
 
     // Filter out .git and .venv folders and their contents
-    const filteredFiles = fileList.filter(file => {
+    const filteredFiles = (fileList || []).filter(file => {
       const parts = file.path.split(/[\\/]/).filter(Boolean);
       return !parts.includes('.git') && !parts.includes('.venv');
     });
@@ -51,46 +52,58 @@ const FileTree = ({ files, promptId, onFileCheckboxChange, expandedStates, onTog
       let current = tree;
 
       // Build directory structure
-      for (let i = 0; i < parts.length - 1; i++) {
+      for (let i = 0; i < parts.length; i++) {
         const part = parts[i];
-        let dir = current.children.find(child => child.name === part);
-        if (!dir) {
-          dir = { name: part, children: [], files: [] };
-          current.children.push(dir);
-        }
-        current = dir;
-      }
+        const isLastPart = i === parts.length - 1;
 
-      // Add file to the deepest directory with isChecked defaulting to true
-      const fileName = parts[parts.length - 1];
-      current.files.push({ ...file, name: fileName, isChecked: file.isChecked ?? true });
+        if (isLastPart) {
+          // This is a file, add it to the current node's files
+          current.files.push({
+            ...file,
+            name: part,
+            isChecked: file.isChecked ?? true,
+            isFile: true,
+          });
+        } else {
+          // This is a directory, ensure it exists as a child node
+          if (!current.children[part]) {
+            current.children[part] = {
+              name: part,
+              children: {},
+              files: [],
+              isFile: false,
+            };
+          }
+          current = current.children[part];
+        }
+      }
     });
 
-    return tree.children.length > 0 || tree.files.length > 0 ? tree : {};
+    // Convert children object to array for consistent rendering
+    const convertToArray = (node) => ({
+      ...node,
+      children: Object.values(node.children).map(child => convertToArray(child)),
+    });
+
+    return convertToArray(tree);
   };
 
   /**
    * @function renderNode
    * @description Recursively renders a tree node (directory or file)
-   * @param {Object} node - Tree node with name, children, and files
+   * @param {Object} node - Tree node with name, children, files, and isFile flag
    * @param {string} path - Cumulative path for tracking expansion state
    * @returns {JSX.Element} Rendered node
    */
   const renderNode = (node, path = '') => {
-    // Return null if node is undefined or doesn't have required properties
-    if (!node || typeof node !== 'object') return null;
-    
-    // Ensure node has required properties with defaults
-    const children = node.children || [];
-    const files = node.files || [];
-    const name = node.name || '';
-    
-    const fullPath = path ? `${path}/${name}` : name;
-    const isDir = children.length > 0;
+    if (!node || typeof node !== 'object' || !node.name) return null;
+
+    const fullPath = path ? `${path}/${node.name}` : node.name;
+    const isDir = !node.isFile && (node.children.length > 0 || node.files.length > 0);
     const isExpanded = expandedStates[fullPath];
 
     return (
-      <VStack key={fullPath} align="start" spacing={1} pl={isDir ? 0 : 4}>
+      <VStack key={fullPath} align="start" spacing={1} pl={node.isFile ? 4 : 0}>
         {isDir ? (
           <Box>
             <Flex align="center">
@@ -102,21 +115,12 @@ const FileTree = ({ files, promptId, onFileCheckboxChange, expandedStates, onTog
                 onClick={() => onToggleExpand(fullPath)}
                 mr={1}
               />
-              <Text fontWeight="bold">{name}</Text>
+              <Text fontWeight="bold">{node.name}/</Text>
             </Flex>
             {isExpanded && (
               <Box pl={4}>
-                {children.map(child => renderNode(child, fullPath))}
-                {files.map(file => (
-                  <Flex key={file.path} align="center">
-                    <Checkbox
-                      isChecked={file.isChecked}
-                      onChange={() => onFileCheckboxChange(promptId, file.path)}
-                      mr={2}
-                    />
-                    <Text color="gray.600" fontSize="sm">{file.name}</Text>
-                  </Flex>
-                ))}
+                {node.children.map(child => renderNode(child, fullPath))}
+                {node.files.map(file => renderNode(file, fullPath))}
               </Box>
             )}
           </Box>
@@ -127,19 +131,19 @@ const FileTree = ({ files, promptId, onFileCheckboxChange, expandedStates, onTog
               onChange={() => onFileCheckboxChange(promptId, node.path)}
               mr={2}
             />
-            <Text color="gray.600" fontSize="sm">{name}</Text>
+            <Text color="gray.600" fontSize="sm">{node.name}</Text>
           </Flex>
         )}
       </VStack>
     );
   };
 
-  const tree = buildTree(files || []);  // Ensure files is an array
+  const tree = buildTree(files);
 
   return (
     <VStack align="start" spacing={2}>
-      {(tree.children || []).map(child => renderNode(child))}
-      {(tree.files || []).map(file => renderNode(file))}
+      {tree.children.map(child => renderNode(child))}
+      {tree.files.map(file => renderNode(file))}
     </VStack>
   );
 };

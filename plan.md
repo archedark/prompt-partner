@@ -139,7 +139,7 @@
      - [X] Needs to ignore the selected directories' .gitignore list if it has one.
      - [X] File tree should be recursively collapsible/expandable rather than just a list of files' absolute paths.
      - [X] File tree rendered to master prompt should be a condensed tree rather than a flat list of files' absolute paths. It should also not include files/dirs on the .gitignore list.
-     - [ ] Bug: A folder was included as a file in the expanded state. It didn't have the folder's contents nested beneath.
+     - [X] Bug: A folder was included as a file in the expanded state. It didn't have the folder's contents nested beneath.
      - [ ] Add a select/deselect all toggle. It should default to select all and switch to deselect all when all files are selected. Use an icon rather than text.
    - [ ] Fix the lag between frontend and backend interactions (e.g., adding a directory, checking a file, expanding the directory list)
       - [ ] Prototype WebSocket integration or caching on a separate branch to test performance gains before committing to a full refactor
