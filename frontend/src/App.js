@@ -38,7 +38,7 @@ import PromptEditor from './components/PromptEditor';
 import MasterPrompt from './components/MasterPrompt';
 import SelectedPromptList from './components/SelectedPromptList';
 import DirectoryManager from './components/DirectoryManager';
-import { getPrompts, createPrompt, updatePrompt, deletePrompt, setDirectory, updateDirectoryFileState, getFileContent, updateAllDirectoryFileStates } from './api';
+import { getPrompts, createPrompt, updatePrompt, deletePrompt, setDirectory, updateDirectoryFileState, getFileContent, updateAllDirectoryFileStates, refreshDirectoryPrompt } from './api';
 
 function App() {
   const [prompts, setPrompts] = useState([]);
@@ -180,6 +180,30 @@ function App() {
     setSelectedPrompts(prev => {
       const newSelection = prev.includes(id) ? prev.filter(pid => pid !== id) : [...prev, id];
       setSelectedPromptOrder(newSelection);
+      
+      // If this is a newly selected directory prompt, refresh it
+      // TODO: Make directory auto-refresh configurable in settings menu
+      if (!prev.includes(id) && newSelection.includes(id)) {
+        const prompt = prompts.find(p => p.id === id);
+        if (prompt && prompt.isDirectory) {
+          refreshDirectoryPrompt(id)
+            .then(() => {
+              // Fetch updated prompts after a short delay to allow backend processing
+              setTimeout(() => refreshPrompts(), 1000);
+            })
+            .catch(error => {
+              console.error('Error refreshing directory:', error);
+              toast({
+                title: 'Refresh Failed',
+                description: error.message,
+                status: 'error',
+                duration: 3000,
+                isClosable: true,
+              });
+            });
+        }
+      }
+      
       return newSelection;
     });
   };
