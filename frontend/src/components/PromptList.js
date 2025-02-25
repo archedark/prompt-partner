@@ -22,6 +22,7 @@
  * - onToggleExpand: Function to toggle prompt expansion state
  * - onCollapseAll: Function to collapse all prompts
  * - onFileCheckboxChange: Function to toggle file checkbox state in directory prompts
+ * - onBulkFileCheckboxChange: Function to toggle bulk file checkbox state in directory prompts
  *
  * @notes
  * - Added recursive file tree rendering with collapsible states via FileTree component.
@@ -61,6 +62,7 @@ const PromptList = ({
   onToggleExpand,
   onCollapseAll,
   onFileCheckboxChange,
+  onBulkFileCheckboxChange,
 }) => {
   const toast = useToast();
   const [expandedFileStates, setExpandedFileStates] = useState({});
@@ -192,6 +194,7 @@ const PromptList = ({
                       files={prompt.files}
                       promptId={prompt.id}
                       onFileCheckboxChange={onFileCheckboxChange}
+                      onBulkFileCheckboxChange={onBulkFileCheckboxChange}
                       expandedStates={expandedFileStates}
                       onToggleExpand={handleToggleFileExpand}
                     />

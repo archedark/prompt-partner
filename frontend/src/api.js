@@ -154,6 +154,30 @@ export const updateDirectoryFileState = async (id, filePath, isChecked) => {
 };
 
 /**
+ * @function updateAllDirectoryFileStates
+ * @description Updates the checkbox state of all files in a directory prompt
+ * @param {number} id - Directory prompt ID
+ * @param {boolean} isChecked - New checkbox state for all files
+ * @returns {Promise<void>}
+ */
+export const updateAllDirectoryFileStates = async (id, isChecked) => {
+  try {
+    const response = await fetch(`${API_URL}/directory/${id}/files/bulk`, {
+      method: 'PUT',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ isChecked }),
+    });
+    if (!response.ok) {
+      const errorData = await response.json();
+      throw new Error(errorData.error || 'Failed to update file states');
+    }
+  } catch (error) {
+    console.error('API error:', error.message);
+    throw error;
+  }
+};
+
+/**
  * @function getFileContent
  * @description Fetches the content of a specific file from a directory prompt
  * @param {number} directoryId - Directory prompt ID

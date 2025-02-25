@@ -73,7 +73,9 @@ const readDirectory = async (dirPath, includeContents = true) => {
       '*.pdf', '*.doc', '*.docx', '*.ppt', '*.pptx',
       '*.xls', '*.xlsx', '*.db', '*.sqlite',
       'node_modules', '.venv', 'venv', '.git',
-      'dist', 'build', 'coverage'
+      'dist', 'build', 'coverage',
+      'package-lock.json',
+      '*.log' // Exclude log files
     ]);
 
     const files = [];
@@ -299,6 +301,39 @@ app.put('/directory/:id/file', (req, res) => {
       if (updateErr) {
         console.error('Database error:', updateErr.message);
         return res.status(500).json({ error: 'Failed to update file state: ' + updateErr.message });
+      }
+      res.status(204).send();
+    });
+  });
+});
+
+// Add a new endpoint for bulk file state updates
+app.put('/directory/:id/files/bulk', (req, res) => {
+  const { id } = req.params;
+  const { isChecked } = req.body;
+  
+  if (typeof isChecked !== 'boolean') {
+    return res.status(400).json({ error: 'isChecked boolean is required' });
+  }
+
+  getPrompts((err, prompts) => {
+    if (err) {
+      console.error('Database error:', err.message);
+      return res.status(500).json({ error: 'Failed to fetch prompts: ' + err.message });
+    }
+    
+    const prompt = prompts.find(p => p.id === parseInt(id));
+    if (!prompt || !prompt.isDirectory) {
+      return res.status(404).json({ error: 'Directory prompt not found' });
+    }
+
+    // Update all files to the same checked state
+    const updatedFiles = prompt.files.map(file => ({ ...file, isChecked }));
+    
+    updatePrompt(id, prompt.name, prompt.content, prompt.tags, updatedFiles, (updateErr) => {
+      if (updateErr) {
+        console.error('Database error:', updateErr.message);
+        return res.status(500).json({ error: 'Failed to update file states: ' + updateErr.message });
       }
       res.status(204).send();
     });

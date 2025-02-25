@@ -38,7 +38,7 @@ import PromptEditor from './components/PromptEditor';
 import MasterPrompt from './components/MasterPrompt';
 import SelectedPromptList from './components/SelectedPromptList';
 import DirectoryManager from './components/DirectoryManager';
-import { getPrompts, createPrompt, updatePrompt, deletePrompt, setDirectory, updateDirectoryFileState, getFileContent } from './api';
+import { getPrompts, createPrompt, updatePrompt, deletePrompt, setDirectory, updateDirectoryFileState, getFileContent, updateAllDirectoryFileStates } from './api';
 
 function App() {
   const [prompts, setPrompts] = useState([]);
@@ -198,6 +198,35 @@ function App() {
     }
   };
 
+  const handleBulkFileCheckboxChange = async (promptId, isChecked) => {
+    const prompt = prompts.find(p => p.id === promptId);
+    if (!prompt || !prompt.isDirectory) return;
+
+    try {
+      await updateAllDirectoryFileStates(promptId, isChecked);
+      setPrompts(prompts.map(p =>
+        p.id === promptId
+          ? { ...p, files: p.files.map(f => ({ ...f, isChecked })) }
+          : p
+      ));
+      toast({
+        title: `Files ${isChecked ? 'Selected' : 'Deselected'}`,
+        description: `All files in ${prompt.name} have been ${isChecked ? 'selected' : 'deselected'}.`,
+        status: 'success',
+        duration: 2000,
+        isClosable: true,
+      });
+    } catch (error) {
+      toast({
+        title: 'Error Updating File States',
+        description: error.message,
+        status: 'error',
+        duration: 3000,
+        isClosable: true,
+      });
+    }
+  };
+
   const handlePromptsUpdate = (updatedPrompts) => {
     setPrompts(updatedPrompts);
   };
@@ -220,7 +249,11 @@ function App() {
       // Check if any part of the path is .git or .venv
       return !parts.includes('.git') && !parts.includes('.venv') && 
              // Also check if the path starts with .git/ or .git\
-             !file.path.startsWith('.git/') && !file.path.startsWith('.git\\');
+             !file.path.startsWith('.git/') && !file.path.startsWith('.git\\') &&
+             // Exclude package-lock.json files
+             !file.path.endsWith('package-lock.json') &&
+             // Exclude log files
+             !file.path.endsWith('.log');
     });
 
     const tree = {};
@@ -258,7 +291,9 @@ function App() {
       
       if (prompt.isDirectory) {
         // Get checked files (metadata only at this point)
-        const checkedFiles = prompt.files.filter(f => f.isChecked);
+        const checkedFiles = prompt.files.filter(f => 
+          f.isChecked && !f.path.endsWith('package-lock.json') && !f.path.endsWith('.log')
+        );
         if (!checkedFiles.length && !selectedPrompts.includes(id)) return '';
         
         // Build the tree text
@@ -344,6 +379,7 @@ function App() {
             onToggleExpand={handleToggleExpand}
             onCollapseAll={handleCollapseAll}
             onFileCheckboxChange={handleFileCheckboxChange}
+            onBulkFileCheckboxChange={handleBulkFileCheckboxChange}
           />
         </Box>
 
