@@ -21,6 +21,7 @@
  * - Assumes backend excludes `.gitignore` contents; displays only provided files.
  * - Fixed bug where folders were rendered as files by ensuring directory structure is preserved.
  * - Added select/deselect all functionality with an icon button for better UX.
+ * - Added folder-level select/deselect all buttons for each directory.
  */
 import React, { useMemo } from 'react';
 import {
@@ -73,6 +74,65 @@ const FileTree = ({
     // If all or some files are checked, deselect all. Otherwise, select all.
     const newState = fileCheckStatus === 'none';
     onBulkFileCheckboxChange(promptId, newState);
+  };
+
+  /**
+   * @function getDirectoryCheckStatus
+   * @description Determines if all, some, or none of the files in a directory are checked
+   * @param {Object} node - Directory node
+   * @returns {string} 'all', 'some', or 'none'
+   */
+  const getDirectoryCheckStatus = (node) => {
+    // Collect all files in this directory and its subdirectories
+    const allFiles = [];
+    
+    // Add files directly in this directory
+    allFiles.push(...node.files);
+    
+    // Recursively add files from subdirectories
+    const addFilesFromChildren = (childNode) => {
+      allFiles.push(...childNode.files);
+      Object.values(childNode.children).forEach(addFilesFromChildren);
+    };
+    
+    Object.values(node.children).forEach(addFilesFromChildren);
+    
+    if (allFiles.length === 0) return 'none';
+    
+    const checkedCount = allFiles.filter(file => file.isChecked).length;
+    if (checkedCount === 0) return 'none';
+    if (checkedCount === allFiles.length) return 'all';
+    return 'some';
+  };
+
+  /**
+   * @function handleDirectorySelectAll
+   * @description Selects or deselects all files in a specific directory
+   * @param {Object} node - Directory node
+   * @param {string} path - Directory path
+   */
+  const handleDirectorySelectAll = (node, path) => {
+    const dirCheckStatus = getDirectoryCheckStatus(node);
+    const newState = dirCheckStatus === 'none';
+    
+    // Update all files in this directory
+    node.files.forEach(file => {
+      if (file.isChecked !== newState) {
+        onFileCheckboxChange(promptId, file.path);
+      }
+    });
+    
+    // Recursively update files in subdirectories
+    const updateFilesInChildren = (childNode) => {
+      childNode.files.forEach(file => {
+        if (file.isChecked !== newState) {
+          onFileCheckboxChange(promptId, file.path);
+        }
+      });
+      Object.values(childNode.children).forEach(updateFilesInChildren);
+    };
+    
+    Object.values(node.children).forEach(updateFilesInChildren);
   };
 
   /**
@@ -140,6 +200,9 @@ const FileTree = ({
     const fullPath = parentPath ? `${parentPath}/${node.name}` : node.name;
     const isDirectory = Object.keys(node.children).length > 0 || node.files.length > 0;
     const isExpanded = expandedStates[fullPath] || false;
+    
+    // For directories, determine check status
+    const dirCheckStatus = isDirectory ? getDirectoryCheckStatus(node) : 'none';
 
     return (
       <VStack key={fullPath} align="stretch" spacing={1} mt={1}>
@@ -154,6 +217,24 @@ const FileTree = ({
                 onClick={() => onToggleExpand(fullPath)}
                 mr={1}
               />
+              
+              {/* Directory select/deselect all button */}
+              <Tooltip 
+                label={dirCheckStatus === 'none' ? 'Select All Files in Folder' : 'Deselect All Files in Folder'}
+                placement="top"
+                hasArrow
+              >
+                <IconButton
+                  aria-label={dirCheckStatus === 'none' ? 'Select All Files in Folder' : 'Deselect All Files in Folder'}
+                  icon={dirCheckStatus === 'none' ? <CheckIcon /> : <SmallCloseIcon />}
+                  size="xs"
+                  colorScheme={dirCheckStatus === 'all' ? 'blue' : 'gray'}
+                  onClick={() => handleDirectorySelectAll(node, fullPath)}
+                  variant={dirCheckStatus === 'some' ? 'solid' : 'outline'}
+                  mr={2}
+                />
+              </Tooltip>
+              
               <Text fontWeight="bold">{node.name}/</Text>
             </Flex>
             {isExpanded && (

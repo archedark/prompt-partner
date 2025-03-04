@@ -78,6 +78,10 @@ const readDirectory = async (dirPath, includeContents = true) => {
       '*.log' // Exclude log files
     ]);
 
+    // Add minecraft files to ignore
+    ig.add(['versions', 'worlds'])
+
+
     const files = [];
     
     // Check if directory exists before trying to read it
