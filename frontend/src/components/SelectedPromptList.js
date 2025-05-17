@@ -48,7 +48,8 @@ const SelectedPromptList = ({ selectedPrompts, prompts, onReorder }) => {
   const handleDragEnd = (event) => {
     const { active, over } = event;
 
-    if (active.id !== over.id) {
+    // `over` can be null if the item is dropped outside the list
+    if (over && active.id !== over.id) {
       const oldIndex = selectedPrompts.indexOf(active.id);
       const newIndex = selectedPrompts.indexOf(over.id);
       onReorder(arrayMove(selectedPrompts, oldIndex, newIndex));
