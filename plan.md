@@ -144,7 +144,7 @@
      - [X] Ensure directory prompt tags are shown.
      - [X] Add a select/deselect all toggle
    - [X] Fix the lag between frontend and backend interactions (e.g., adding a directory, checking a file, expanding the directory list)
-   - [ ] Manual testing to verify behavior
+   - [X] Manual testing to verify behavior
    - [ ] Write integration tests for repo integration
 7. **Prompt History**
    - [ ] Identify prompt history requirements
