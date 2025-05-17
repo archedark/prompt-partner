@@ -32,6 +32,14 @@ check_port() {
     return 0
 }
 
+# Install dependencies only if node_modules is missing
+npm_cmd_install() {
+    if [ ! -d "$1/node_modules" ]; then
+        echo "Installing dependencies in $1..."
+        (cd "$1" && npm install)
+    fi
+}
+
 # Check port availability
 echo "Checking port availability..."
 check_port 3001 || exit 1  # Frontend port
@@ -41,20 +49,21 @@ echo -e "${GREEN}Starting Promptner servers...${NC}"
 
 # Start backend server
 echo -e "${YELLOW}Starting backend server...${NC}"
+
+npm_cmd_install backend && \
 cd backend && \
-echo "Installing backend dependencies..." && \
-npm install && \
 echo "Starting backend server..." && \
 npm start &
+
+cd ..
 
 # Wait a moment before starting frontend
 sleep 5
 
 # Start frontend server
 echo -e "${YELLOW}Starting frontend server...${NC}"
-cd ../frontend && \
-echo "Installing frontend dependencies..." && \
-npm install && \
+npm_cmd_install frontend && \
+cd frontend && \
 echo "Starting frontend server..." && \
 npm start &
 
