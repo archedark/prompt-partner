@@ -231,11 +231,13 @@ function App() {
 
     try {
       await updateDirectoryFileState(promptId, filePath, newCheckedState);
-      setPrompts(prompts.map(p =>
-        p.id === promptId
-          ? { ...p, files: p.files.map(f => f.path === filePath ? { ...f, isChecked: newCheckedState } : f) }
-          : p
-      ));
+      setPrompts(prevPrompts =>
+        prevPrompts.map(p =>
+          p.id === promptId
+            ? { ...p, files: p.files.map(f => f.path === filePath ? { ...f, isChecked: newCheckedState } : f) }
+            : p
+        )
+      );
     } catch (error) {
       toast({
         title: 'Error Updating File State',
@@ -253,11 +255,13 @@ function App() {
 
     try {
       await updateAllDirectoryFileStates(promptId, isChecked);
-      setPrompts(prompts.map(p =>
-        p.id === promptId
-          ? { ...p, files: p.files.map(f => ({ ...f, isChecked })) }
-          : p
-      ));
+      setPrompts(prevPrompts =>
+        prevPrompts.map(p =>
+          p.id === promptId
+            ? { ...p, files: p.files.map(f => ({ ...f, isChecked })) }
+            : p
+        )
+      );
       toast({
         title: `Files ${isChecked ? 'Selected' : 'Deselected'}`,
         description: `All files in ${prompt.name} have been ${isChecked ? 'selected' : 'deselected'}.`,
