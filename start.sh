@@ -1,111 +1,74 @@
 #!/bin/bash
 
+# Promptner startup script for Unix/Linux/macOS
+set -e
+
 # Set terminal title
-echo -e "\033]0;Promptner Startup Script\007"
+printf '\033]0;Promptner Startup Script\007'
 
-# Color codes
-GREEN='\033[0;32m'
-RED='\033[0;31m'
-YELLOW='\033[1;33m'
-BLUE='\033[0;34m'
-NC='\033[0m' # No Color
-
-# Check if Node.js is installed
-echo "Checking Node.js installation..."
-if ! command -v node &> /dev/null; then
-    echo -e "${RED}Node.js is not installed. Please install Node.js and try again.${NC}"
-    exit 1
+# Ensure Node and npm are available
+if ! command -v node >/dev/null 2>&1; then
+  echo "Node.js is not installed. Please install Node.js and try again." >&2
+  exit 1
 fi
 
-# Check if npm is installed
-echo "Checking npm installation..."
-if ! command -v npm &> /dev/null; then
-    echo -e "${RED}npm is not installed. Please install npm and try again.${NC}"
-    exit 1
+if ! command -v npm >/dev/null 2>&1; then
+  echo "npm is not installed. Please install npm and try again." >&2
+  exit 1
 fi
 
-# Function to check if a port is available
+# Utility: check if a port is free
 check_port() {
-    if lsof -Pi :$1 -sTCP:LISTEN -t >/dev/null ; then
-        echo -e "${RED}Port $1 is already in use. Please free up the port and try again.${NC}"
-        return 1
-    fi
-    return 0
+  if lsof -Pi :"$1" -sTCP:LISTEN -t >/dev/null 2>&1; then
+    echo "Port $1 is already in use. Please free the port and try again." >&2
+    return 1
+  fi
+  return 0
 }
 
-# Install dependencies only if node_modules is missing
-npm_cmd_install() {
-    if [ ! -d "$1/node_modules" ]; then
-        echo "Installing dependencies in $1..."
-        (cd "$1" && npm install)
-    fi
+# Utility: run npm install if node_modules is missing
+install_if_missing() {
+  if [ ! -d "$1/node_modules" ]; then
+    echo "Installing dependencies in $1..."
+    (cd "$1" && npm install)
+  fi
 }
 
-# Check port availability
+# Verify required ports are available
 echo "Checking port availability..."
-check_port 3001 || exit 1  # Frontend port
-check_port 5001 || exit 1  # Backend port
+check_port 3001 || exit 1
+check_port 5001 || exit 1
 
-echo -e "${GREEN}Starting Promptner servers...${NC}"
-
-# Check if dependencies need to be installed
-BACKEND_DEPS_NEEDED=0
-FRONTEND_DEPS_NEEDED=0
-
-if [ ! -d "backend/node_modules" ]; then
-    BACKEND_DEPS_NEEDED=1
-fi
-
-if [ ! -d "frontend/node_modules" ]; then
-    FRONTEND_DEPS_NEEDED=1
-fi
-
-# Install dependencies only if needed
-if [ $BACKEND_DEPS_NEEDED -eq 1 ]; then
-    echo -e "${BLUE}Installing backend dependencies...${NC}"
-    (cd backend && npm ci --no-audit --no-fund)
-    if [ $? -ne 0 ]; then
-        echo -e "${RED}Failed to install backend dependencies.${NC}"
-        exit 1
-    fi
-fi
-
-if [ $FRONTEND_DEPS_NEEDED -eq 1 ]; then
-    echo -e "${BLUE}Installing frontend dependencies...${NC}"
-    (cd frontend && npm ci --no-audit --no-fund)
-    if [ $? -ne 0 ]; then
-        echo -e "${RED}Failed to install frontend dependencies.${NC}"
-        exit 1
-    fi
-fi
-
-# Start both servers in parallel
-echo -e "${YELLOW}Starting backend and frontend servers simultaneously...${NC}"
+# Install dependencies if needed
+install_if_missing backend
+install_if_missing frontend
 
 # Start backend server
-echo -e "${YELLOW}Starting backend server...${NC}"
+echo "Starting backend server..."
+(
+  cd backend
+  npm start &
+  BACKEND_PID=$!
+  wait $BACKEND_PID
+) &
+BACKEND_PID=$!
 
-npm_cmd_install backend && \
-cd backend && \
-echo "Starting backend server..." && \
-npm start &
-
-cd ..
-
-# Wait a moment before starting frontend
+# Give backend a moment to start
 sleep 5
 
 # Start frontend server
-echo -e "${YELLOW}Starting frontend server...${NC}"
-npm_cmd_install frontend && \
-cd frontend && \
-echo "Starting frontend server..." && \
-npm start &
+echo "Starting frontend server..."
+(
+  cd frontend
+  npm start &
+  FRONTEND_PID=$!
+  wait $FRONTEND_PID
+) &
+FRONTEND_PID=$!
 
-echo -e "${GREEN}Servers are starting. Please wait...${NC}"
-echo -e "${YELLOW}Frontend will be available at http://localhost:3001${NC}"
-echo -e "${YELLOW}Backend will be available at http://localhost:5001${NC}"
+echo "Servers are starting."
+echo "Frontend: http://localhost:3001"
+echo "Backend:  http://localhost:5001"
 
-# Keep the script running but allow for clean shutdown with Ctrl+C
-trap "kill $BACKEND_PID $FRONTEND_PID; exit" INT
-wait 
+trap 'kill $BACKEND_PID $FRONTEND_PID' INT
+wait $BACKEND_PID $FRONTEND_PID
