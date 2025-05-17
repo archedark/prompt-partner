@@ -27,13 +27,15 @@ echo Starting Promptner servers...
 :: Start backend server
 echo Starting backend server...
 cd backend
-echo Installing backend dependencies... >> %LOGFILE%
-call npm install >> %LOGFILE% 2>&1
-if errorlevel 1 (
-    echo Failed to install backend dependencies. Check %LOGFILE% for details.
-    cd ..
-    pause
-    exit /b 1
+if not exist node_modules (
+    echo Installing backend dependencies... >> %LOGFILE%
+    call npm install >> %LOGFILE% 2>&1
+    if errorlevel 1 (
+        echo Failed to install backend dependencies. Check %LOGFILE% for details.
+        cd ..
+        pause
+        exit /b 1
+    )
 )
 echo Starting backend server... >> %LOGFILE%
 start "Promptner Backend" cmd /k "npm start >> %LOGFILE% 2>&1"
@@ -45,13 +47,15 @@ timeout /t 5 /nobreak > nul
 :: Start frontend server
 echo Starting frontend server...
 cd frontend
-echo Installing frontend dependencies... >> %LOGFILE%
-call npm install >> %LOGFILE% 2>&1
-if errorlevel 1 (
-    echo Failed to install frontend dependencies. Check %LOGFILE% for details.
-    cd ..
-    pause
-    exit /b 1
+if not exist node_modules (
+    echo Installing frontend dependencies... >> %LOGFILE%
+    call npm install >> %LOGFILE% 2>&1
+    if errorlevel 1 (
+        echo Failed to install frontend dependencies. Check %LOGFILE% for details.
+        cd ..
+        pause
+        exit /b 1
+    )
 )
 echo Starting frontend server... >> %LOGFILE%
 start "Promptner Frontend" cmd /k "npm start >> %LOGFILE% 2>&1"
