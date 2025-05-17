@@ -10,11 +10,13 @@
  *
  * @notes
  * - Mocks the Clipboard API (navigator.clipboard.writeText) with Jest so `.toHaveBeenCalledWith()` works.
- * - Also verifies the copy button is disabled if there's no text.
+ * - Uses renderWithChakra from setupTests.js to provide ChakraProvider context.
+ * - Verifies the copy button is disabled if there's no text.
  */
 
 import React from 'react';
-import { render, screen, fireEvent } from '@testing-library/react';
+import { screen, fireEvent } from '@testing-library/react';
+import { renderWithChakra } from '../../setupTests'; // Import custom render
 import MasterPrompt from '../MasterPrompt';
 
 describe('<MasterPrompt />', () => {
@@ -29,7 +31,7 @@ describe('<MasterPrompt />', () => {
   });
 
   test('renders the combined text in the textarea', () => {
-    render(<MasterPrompt selectedPromptsText="Example combined text" />);
+    renderWithChakra(<MasterPrompt selectedPromptsText="Example combined text" />);
 
     expect(
       screen.getByPlaceholderText(/Selected prompts will appear here.../i)
@@ -37,13 +39,13 @@ describe('<MasterPrompt />', () => {
   });
 
   test('copy button is disabled if no text is present', () => {
-    render(<MasterPrompt selectedPromptsText="" />);
+    renderWithChakra(<MasterPrompt selectedPromptsText="" />);
     const copyButton = screen.getByRole('button', { name: /Copy to Clipboard/i });
     expect(copyButton).toBeDisabled();
   });
 
   test('clicking copy button writes text to clipboard if text is present', () => {
-    render(<MasterPrompt selectedPromptsText="Some text" />);
+    renderWithChakra(<MasterPrompt selectedPromptsText="Some text" />);
     const copyButton = screen.getByRole('button', { name: /Copy to Clipboard/i });
     expect(copyButton).not.toBeDisabled();
 

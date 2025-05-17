@@ -2,40 +2,35 @@
  * @file PromptList.js
  * @description Displays a scrollable list of prompts with checkboxes, expand/collapse toggles,
  *              plus edit/delete buttons and clear selections/collapse all options.
+ *              Supports directory prompts with recursive, collapsible file trees.
  *
  * @dependencies
  * - React: For component rendering
- * - Chakra UI (Box, Text, Checkbox, IconButton, Stack, Heading, Flex, Button, useToast, Badge): UI components
- * - @chakra-ui/icons (DeleteIcon, EditIcon, ChevronDownIcon, ChevronUpIcon, CopyIcon): Action button icons
- * - gpt-tokenizer: For accurate GPT token counting
+ * - Chakra UI: For UI components
+ * - @chakra-ui/icons: For action button icons
+ * - gpt-tokenizer: For token counting
+ * - FileTree: For rendering recursive directory structures
  *
  * @props
- * - prompts: Array of prompt objects (id, name, content, tags, created_at)
+ * - prompts: Array of prompt objects (id, name, content, tags, created_at, isDirectory, files)
  * - selectedPrompts: Array of selected prompt IDs
  * - onSelectPrompt: Function to toggle prompt selection by ID
  * - onDeletePrompt: Function to delete a prompt by ID
- * - onEditPromptClick: Function to set the editingPrompt state in App
- * - onClearSelections: Function to clear all selected prompts
- * - expandedStates: Object mapping prompt IDs to boolean (true if expanded)
- * - onToggleExpand: Function to toggle expansion state by prompt ID
+ * - onEditPromptClick: Function to set editingPrompt state
+ * - onClearSelections: Function to clear all selections
+ * - expandedStates: Object mapping prompt IDs to boolean (expanded state)
+ * - onToggleExpand: Function to toggle prompt expansion state
  * - onCollapseAll: Function to collapse all prompts
+ * - onFileCheckboxChange: Function to toggle file checkbox state in directory prompts
+ * - onBulkFileCheckboxChange: Function to toggle bulk file checkbox state in directory prompts
+ * - onRefreshPrompts: Function to refresh prompts after directory refresh
  *
  * @notes
- * - Each prompt includes a checkbox, content, tags, expand/collapse toggle, Edit, and Delete buttons.
- * - Checkbox has a data-testid for Cypress targeting, avoiding overlap issues.
- * - Added data-testid to Stack for broader Cypress targeting.
- * - Clear Selections button is enabled when prompts are selected and triggers onClearSelections.
- * - Expandable Prompt List Requirements:
- *   - Display: Checkbox, prompt text, tags, and an expand/collapse toggle button per prompt.
- *   - Collapsed View: Shows first 2-3 lines of prompt text, truncated tag list (with '...' for more), and collapsed state indicator (ChevronDownIcon).
- *   - Expanded View: Full prompt text (scrollable if long), complete tag list, metadata (created_at), and expanded state indicator (ChevronUpIcon).
- *   - State Persistence: Store expanded/collapsed state in local storage (to be implemented later).
- *   - Bulk Collapse: 'Collapse All' button collapses all prompts at once.
- *   - Token Count: Display token count per prompt (overlaps with feature 8; deferred).
- * - Uses GPT-3 tokenizer for accurate token counts.
+ * - Added recursive file tree rendering with collapsible states via FileTree component.
+ * - Maintains separate expanded states for prompts and file tree nodes.
+ * - Added refresh button for directory prompts to manually update file list.
  */
-
-import React from 'react';
+import React, { useState } from 'react';
 import {
   Box,
   Text,
@@ -54,8 +49,11 @@ import {
   ChevronDownIcon, 
   ChevronUpIcon,
   CopyIcon,
+  RepeatIcon,
 } from '@chakra-ui/icons';
 import { countTokens, getTokenColorScheme } from '../utils/tokenizer';
+import FileTree from './FileTree';
+import { refreshDirectoryPrompt } from '../api';
 
 const PromptList = ({
   prompts,
@@ -67,25 +65,72 @@ const PromptList = ({
   expandedStates = {},
   onToggleExpand,
   onCollapseAll,
+  onFileCheckboxChange,
+  onBulkFileCheckboxChange,
+  onRefreshPrompts,
 }) => {
   const toast = useToast();
+  const [expandedFileStates, setExpandedFileStates] = useState({});
+  const [refreshingDirectories, setRefreshingDirectories] = useState({});
 
   const handleCopyPrompt = async (content, name) => {
     try {
       await navigator.clipboard.writeText(content);
       toast({
         title: `Copied prompt: ${name}`,
-        status: "success",
+        status: 'success',
         duration: 2000,
         isClosable: true,
       });
     } catch (err) {
       toast({
-        title: "Failed to copy prompt",
-        status: "error",
+        title: 'Failed to copy prompt',
+        status: 'error',
         duration: 2000,
         isClosable: true,
       });
+    }
+  };
+
+  const handleToggleFileExpand = (path) => {
+    setExpandedFileStates(prev => ({ ...prev, [path]: !prev[path] }));
+  };
+
+  const handleCollapseAllFiles = () => {
+    setExpandedFileStates({});
+  };
+
+  const handleRefreshDirectory = async (promptId) => {
+    if (refreshingDirectories[promptId]) return; // Prevent multiple refreshes
+    
+    setRefreshingDirectories(prev => ({ ...prev, [promptId]: true }));
+    
+    try {
+      await refreshDirectoryPrompt(promptId);
+      toast({
+        title: 'Directory Refreshed',
+        description: 'The directory files are being updated.',
+        status: 'success',
+        duration: 2000,
+        isClosable: true,
+      });
+      
+      // Fetch updated prompts after a short delay to allow backend processing
+      setTimeout(async () => {
+        if (onRefreshPrompts) {
+          await onRefreshPrompts();
+        }
+        setRefreshingDirectories(prev => ({ ...prev, [promptId]: false }));
+      }, 1000);
+    } catch (error) {
+      toast({
+        title: 'Refresh Failed',
+        description: error.message,
+        status: 'error',
+        duration: 3000,
+        isClosable: true,
+      });
+      setRefreshingDirectories(prev => ({ ...prev, [promptId]: false }));
     }
   };
 
@@ -97,10 +142,10 @@ const PromptList = ({
       <Stack spacing={4} maxH="400px" overflowY="auto" pr={2} data-testid="prompt-list">
         {prompts.length === 0 && (
           <Text fontStyle="italic" color="gray.500">
-            No prompts found. Add a new prompt.
+            No prompts found. Add a new prompt or directory.
           </Text>
         )}
-        {prompts.map((prompt) => {
+        {prompts.map(prompt => {
           const isExpanded = expandedStates[prompt.id] || false;
           return (
             <Box
@@ -109,13 +154,12 @@ const PromptList = ({
               borderRadius="md"
               position="relative"
             >
-              {/* Fixed Header with Actions */}
               <Flex
                 p={3}
                 pb={2}
                 alignItems="center"
                 justifyContent="space-between"
-                borderBottomWidth={isExpanded ? "1px" : "0"}
+                borderBottomWidth={isExpanded ? '1px' : '0'}
                 borderBottomColor="gray.200"
                 bg="white"
                 borderTopRadius="md"
@@ -123,7 +167,6 @@ const PromptList = ({
                 top={0}
                 zIndex={1}
               >
-                {/* Checkbox and Name */}
                 <Flex alignItems="center" flex="1">
                   <Box mr={3}>
                     <Checkbox
@@ -136,14 +179,25 @@ const PromptList = ({
                     {prompt.name}
                   </Text>
                 </Flex>
-                {/* Actions */}
                 <Flex gap={2} alignItems="center">
-                  <Badge 
-                    colorScheme={getTokenColorScheme(countTokens(prompt.content))}
-                    variant="subtle"
-                  >
-                    {countTokens(prompt.content)} tokens
-                  </Badge>
+                  {!prompt.isDirectory && (
+                    <Badge
+                      colorScheme={getTokenColorScheme(countTokens(prompt.content))}
+                      variant="subtle"
+                    >
+                      {countTokens(prompt.content)} tokens
+                    </Badge>
+                  )}
+                  {prompt.isDirectory && (
+                    <IconButton
+                      aria-label="Refresh Directory"
+                      icon={<RepeatIcon />}
+                      size="sm"
+                      isLoading={refreshingDirectories[prompt.id]}
+                      onClick={() => handleRefreshDirectory(prompt.id)}
+                      title="Refresh directory files"
+                    />
+                  )}
                   <IconButton
                     aria-label={isExpanded ? 'Collapse Prompt' : 'Expand Prompt'}
                     icon={isExpanded ? <ChevronUpIcon /> : <ChevronDownIcon />}
@@ -168,6 +222,7 @@ const PromptList = ({
                         tags: prompt.tags,
                       })
                     }
+                    isDisabled={prompt.isDirectory} // Disable edit for directories
                   />
                   <IconButton
                     aria-label="Delete Prompt"
@@ -178,22 +233,32 @@ const PromptList = ({
                   />
                 </Flex>
               </Flex>
-              {/* Scrollable Content */}
               <Box p={3} pt={2}>
-                <Box 
-                  maxH={isExpanded ? "300px" : "auto"} 
-                  overflowY={isExpanded ? "auto" : "hidden"}
-                  pr={isExpanded ? 2 : 0} // Add padding for scrollbar
+                <Box
+                  maxH={isExpanded ? '300px' : 'auto'}
+                  overflowY={isExpanded ? 'auto' : 'hidden'}
+                  pr={isExpanded ? 2 : 0}
                 >
-                  <Text color="gray.600" noOfLines={isExpanded ? undefined : 2}>
-                    {prompt.content}
-                  </Text>
+                  {prompt.isDirectory && isExpanded ? (
+                    <FileTree
+                      files={prompt.files}
+                      promptId={prompt.id}
+                      onFileCheckboxChange={onFileCheckboxChange}
+                      onBulkFileCheckboxChange={onBulkFileCheckboxChange}
+                      expandedStates={expandedFileStates}
+                      onToggleExpand={handleToggleFileExpand}
+                    />
+                  ) : (
+                    <Text color="gray.600" noOfLines={isExpanded ? undefined : 2}>
+                      {prompt.content}
+                    </Text>
+                  )}
                   {prompt.tags && (
-                    <Text color="gray.600" fontSize="sm" noOfLines={isExpanded ? undefined : 1}>
+                    <Text color="gray.600" fontSize="sm" noOfLines={isExpanded ? undefined : 1} mt={2}>
                       Tags: {prompt.tags}
                     </Text>
                   )}
-                  {isExpanded && (
+                  {isExpanded && !prompt.isDirectory && (
                     <Text color="gray.500" fontSize="xs" mt={2}>
                       Created: {new Date(prompt.created_at).toLocaleString()}
                     </Text>
@@ -204,20 +269,20 @@ const PromptList = ({
           );
         })}
       </Stack>
-      {/* Action Buttons */}
       <Stack direction="row" mt={4} spacing={2}>
         <Button
           colorScheme="gray"
-          onClick={onCollapseAll}
-          isDisabled={Object.values(expandedStates).every(state => !state)}
+          onClick={() => {
+            onCollapseAll();
+            handleCollapseAllFiles();
+          }}
+          isDisabled={Object.values(expandedStates).every(state => !state) && 
+                      Object.values(expandedFileStates).every(state => !state)}
         >
           Collapse All
         </Button>
         {selectedPrompts.length > 0 && (
-          <Button
-            colorScheme="blue"
-            onClick={onClearSelections}
-          >
+          <Button colorScheme="blue" onClick={onClearSelections}>
             Clear Selections
           </Button>
         )}

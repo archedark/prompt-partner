@@ -1,6 +1,6 @@
 /**
  * @file tokenizer.js
- * @description Provides consistent token counting and color coding functions using GPT-3 tokenizer
+ * @description Provides consistent token counting and color coding functions using gpt-tokenizer
  */
 
 import { encode } from 'gpt-tokenizer';
@@ -9,13 +9,20 @@ import { encode } from 'gpt-tokenizer';
 export const DEFAULT_MAX_TOKENS = 128 * 1024; // 128k tokens
 
 /**
- * Counts tokens in text using GPT-3's tokenizer
+ * Counts tokens in text using gpt-tokenizer (browser-compatible)
  * @param {string} text - The text to count tokens in
  * @returns {number} The number of tokens
  */
 export const countTokens = (text) => {
   if (!text) return 0;
-  return encode(text).length;
+  
+  try {
+    const tokens = encode(text);
+    return tokens.length;
+  } catch (error) {
+    console.error('Error counting tokens:', error);
+    throw new Error('Token counting failed. This is required for the application to work correctly.');
+  }
 };
 
 /**

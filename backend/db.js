@@ -1,15 +1,16 @@
 /**
  * @file db.js
- * @description Database connection and queries for Prompt Partner backend.
- *              Now uses process.env.DB_PATH (default ./prompts.db).
- *              Set DB_PATH=:memory: in test environments to enable in-memory SQLite.
+ * @description Database connection and queries for Promptner backend.
+ *              Now supports directory prompts with filesystem data.
  *
  * @dependencies
- * - sqlite3
+ * - sqlite3: For SQLite database operations
  *
  * @notes
- * - By default, uses ./prompts.db.
- * - If DB_PATH=:memory:, will use an in-memory DB (lost on process exit).
+ * - Uses process.env.DB_PATH (default ./prompts.db).
+ * - Set DB_PATH=:memory: in test environments for in-memory SQLite.
+ * - Added `is_directory` and `files` columns for repo integration.
+ * - `files` stored as JSON string in the database.
  */
 
 const sqlite3 = require('sqlite3').verbose();
@@ -25,33 +26,76 @@ db.serialize(() => {
       name TEXT NOT NULL,
       content TEXT NOT NULL,
       tags TEXT,
+      is_directory BOOLEAN DEFAULT 0,
+      files TEXT DEFAULT '[]',  -- JSON string of file objects: [{path, content, isChecked}]
       created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
     )
   `);
 });
 
-const createPrompt = (name, content, tags, callback) => {
+/**
+ * @function createPrompt
+ * @description Inserts a new prompt into the database
+ * @param {string} name - Prompt name
+ * @param {string} content - Prompt content or directory path
+ * @param {string} tags - Comma-separated tags
+ * @param {boolean} isDirectory - Whether this is a directory prompt
+ * @param {Array} files - Array of file objects for directory prompts
+ * @param {function} callback - Callback with (err, id)
+ */
+const createPrompt = (name, content, tags, isDirectory = false, files = [], callback) => {
   db.run(
-    'INSERT INTO prompts (name, content, tags) VALUES (?, ?, ?)',
-    [name, content, tags],
+    'INSERT INTO prompts (name, content, tags, is_directory, files) VALUES (?, ?, ?, ?, ?)',
+    [name, content, tags, isDirectory ? 1 : 0, JSON.stringify(files)],
     function (err) {
       callback(err, this.lastID);
     }
   );
 };
 
+/**
+ * @function getPrompts
+ * @description Retrieves all prompts, parsing JSON files field
+ * @param {function} callback - Callback with (err, rows)
+ */
 const getPrompts = (callback) => {
-  db.all('SELECT * FROM prompts ORDER BY created_at DESC', [], callback);
+  db.all('SELECT * FROM prompts ORDER BY created_at DESC', [], (err, rows) => {
+    if (err) return callback(err);
+    const parsedRows = rows.map(row => ({
+      ...row,
+      isDirectory: !!row.is_directory,
+      files: JSON.parse(row.files || '[]'),
+    }));
+    callback(null, parsedRows);
+  });
 };
 
-const updatePrompt = (id, name, content, tags, callback) => {
-  db.run(
-    'UPDATE prompts SET name = ?, content = ?, tags = ? WHERE id = ?',
-    [name, content, tags, id],
-    callback
-  );
+/**
+ * @function updatePrompt
+ * @description Updates an existing prompt by ID
+ * @param {number} id - Prompt ID
+ * @param {string} name - Updated name
+ * @param {string} content - Updated content
+ * @param {string} tags - Updated tags
+ * @param {Array} files - Updated files array for directory prompts (optional)
+ * @param {function} callback - Callback with (err)
+ */
+const updatePrompt = (id, name, content, tags, files, callback) => {
+  const params = files !== undefined
+    ? [name, content, tags, JSON.stringify(files), id]
+    : [name, content, tags, id];
+  const sql = files !== undefined
+    ? 'UPDATE prompts SET name = ?, content = ?, tags = ?, files = ? WHERE id = ?'
+    : 'UPDATE prompts SET name = ?, content = ?, tags = ? WHERE id = ?';
+  db.run(sql, params, callback);
 };
 
+/**
+ * @function deletePrompt
+ * @description Deletes a prompt by ID
+ * @param {number} id - Prompt ID
+ * @param {function} callback - Callback with (err)
+ */
 const deletePrompt = (id, callback) => {
   db.run('DELETE FROM prompts WHERE id = ?', [id], callback);
 };

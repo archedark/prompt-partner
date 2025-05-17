@@ -37,15 +37,29 @@ if not exist node_modules (
         exit /b 1
     )
 )
-echo Starting backend server... >> %LOGFILE%
+
+if %FRONTEND_DEPS_NEEDED%==1 (
+    echo Installing frontend dependencies...
+    cd frontend
+    call npm ci --no-audit --no-fund >> %LOGFILE% 2>&1
+    if errorlevel 1 (
+        echo Failed to install frontend dependencies. Check %LOGFILE% for details.
+        cd ..
+        pause
+        exit /b 1
+    )
+    cd ..
+)
+
+:: Start both servers in parallel
+echo Starting backend and frontend servers...
+
+:: Start backend server
+cd backend
 start "Promptner Backend" cmd /k "npm start >> %LOGFILE% 2>&1"
 cd ..
 
-:: Wait a moment before starting frontend
-timeout /t 5 /nobreak > nul
-
-:: Start frontend server
-echo Starting frontend server...
+:: Start frontend server (no need to wait)
 cd frontend
 if not exist node_modules (
     echo Installing frontend dependencies... >> %LOGFILE%

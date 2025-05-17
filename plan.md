@@ -123,10 +123,28 @@
    - [X] Manual testing to verify behavior
    - [X] Write integration tests for expandable prompt list
 6. **Repo Integration**
-   - [ ] Identify repo integration requirements
-   - [ ] Write tests for repo integration
-   - [ ] Implement repo integration based on tests (then ensure no test failures)
-   - [ ] Manual testing to verify behavior
+   - [X] Identify repo integration requirements
+   - [X] Write unit tests for repo integration
+   - [X] Implement backend modal for directory management
+     - [X] Add GET /directories endpoint to list watched directories
+     - [X] Update POST /directory to accept user input without requiring absolute path from frontend
+     - [X] Add DELETE /directory/:id endpoint to remove watched directories
+     - [X] Update server.js to manage directory state and watchers
+   - [X] Implement frontend modal for "Watch Directories" button
+     - [X] Replace showDirectoryPicker with a modal component
+     - [X] Fetch and display current watched directories
+     - [X] Allow adding new directories via input
+     - [X] Allow removing directories
+   - [X] Refinement
+     - [X] Needs to ignore the selected directories' .gitignore list if it has one.
+     - [X] File tree should be recursively collapsible/expandable rather than just a list of files' absolute paths.
+     - [X] File tree rendered to master prompt should be a condensed tree rather than a flat list of files' absolute paths. It should also not include files/dirs on the .gitignore list.
+     - [X] Bug: A folder was included as a file in the expanded state. It didn't have the folder's contents nested beneath.
+     - [X] Bug: The file contents are not being rendered to the master prompt properly. They include .git folder, which should be filtered.
+     - [X] Ensure directory prompt tags are shown.
+     - [X] Add a select/deselect all toggle
+   - [X] Fix the lag between frontend and backend interactions (e.g., adding a directory, checking a file, expanding the directory list)
+   - [X] Manual testing to verify behavior
    - [ ] Write integration tests for repo integration
 7. **Prompt History**
    - [ ] Identify prompt history requirements
