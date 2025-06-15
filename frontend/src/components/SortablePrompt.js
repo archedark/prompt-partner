@@ -62,7 +62,7 @@ export function SortablePrompt({ prompt, onRemove }) {
           color="gray.400"
           data-testid={`drag-handle-${prompt.id}`} // Unique test ID for Cypress
         />
-        <Box flex="1">
+        <Box flex="1" minW="0">
           <Text fontWeight="bold" noOfLines={1}>
             {prompt.name}
           </Text>
