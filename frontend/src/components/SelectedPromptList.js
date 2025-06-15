@@ -63,7 +63,7 @@ const SelectedPromptList = ({ selectedPrompts, prompts, onReorder }) => {
   return (
     <Box data-testid="selected-prompts-order" bg="white" p={4} borderRadius="md" boxShadow="sm">
       <Heading as="h2" size="md" mb={3}>
-        Selected Prompts Order
+        Prompt Order
       </Heading>
       {selectedPromptObjects.length === 0 ? (
         <Text fontStyle="italic" color="gray.500">

@@ -491,7 +491,7 @@ function App() {
 
   return (
     <Box bg="gray.50" minH="100vh" py={6}>
-      <Box maxW="1200px" mx="auto" p={4}>
+      <Box maxW="1500px" mx="auto" p={4}>
       <Heading as="h1" size="xl" mb={4} textAlign="center">
         Promptner
       </Heading>
@@ -520,6 +520,7 @@ function App() {
       </HStack>
 
       <Flex direction={flexDirection} gap={6}>
+        {/* Column 1: Prompt list and file tree */}
         <Box flex="1" mb={{ base: 4, md: 0 }}>
           <PromptList
             prompts={filteredPrompts}
@@ -539,14 +540,8 @@ function App() {
           />
         </Box>
 
-        <Flex direction="column" flex="1" gap={6}>
-          <Box>
-            <PromptEditor
-              onAddPrompt={handleAddPrompt}
-              onEditPrompt={handleEditPrompt}
-              editingPrompt={editingPrompt}
-            />
-          </Box>
+        {/* Column 2: Selected order list and Add/Edit prompt */}
+        <Flex direction="column" w={{ base: '100%', md: '260px' }} flexShrink={0} gap={6}>
           <Box>
             <SelectedPromptList
               selectedPrompts={selectedPromptOrder}
@@ -555,9 +550,18 @@ function App() {
             />
           </Box>
           <Box>
-            <MasterPrompt selectedPromptsText={masterPromptText} />
+            <PromptEditor
+              onAddPrompt={handleAddPrompt}
+              onEditPrompt={handleEditPrompt}
+              editingPrompt={editingPrompt}
+            />
           </Box>
         </Flex>
+
+        {/* Column 3: Master prompt and additional instructions */}
+        <Box flex="1">
+          <MasterPrompt selectedPromptsText={masterPromptText} />
+        </Box>
       </Flex>
 
       <Modal isOpen={isModalOpen} onClose={() => setIsModalOpen(false)}>

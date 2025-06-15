@@ -7,7 +7,7 @@
  * - React: For component rendering
  * - @dnd-kit/sortable: For drag-and-drop functionality
  * - @dnd-kit/utilities: For CSS transform utilities
- * - Chakra UI (Box, Text, DragHandleIcon): UI components and icons
+ * - Chakra UI (Box, Text, DragHandleIcon, Tooltip): UI components and icons
  *
  * @props
  * - prompt: Object containing prompt details (id, name, content)
@@ -19,7 +19,7 @@
 import React from 'react';
 import { useSortable } from '@dnd-kit/sortable';
 import { CSS } from '@dnd-kit/utilities';
-import { Box, Text } from '@chakra-ui/react';
+import { Box, Text, Tooltip } from '@chakra-ui/react';
 import { DragHandleIcon } from '@chakra-ui/icons';
 
 export function SortablePrompt({ prompt }) {
@@ -37,35 +37,37 @@ export function SortablePrompt({ prompt }) {
   };
 
   return (
-    <Box
-      ref={setNodeRef}
-      style={style}
-      borderWidth="1px"
-      borderRadius="md"
-      p={3}
-      mb={2}
-      bg="white"
-      boxShadow="sm"
-      display="flex"
-      alignItems="center"
-      cursor="grab"
-      _hover={{ bg: 'gray.50' }}
-      {...attributes}
-      {...listeners}
-    >
-      <DragHandleIcon
-        mr={3}
-        color="gray.400"
-        data-testid={`drag-handle-${prompt.id}`} // Unique test ID for Cypress
-      />
-      <Box flex="1">
-        <Text fontWeight="bold" noOfLines={1}>
-          {prompt.name}
-        </Text>
-        <Text color="gray.600" fontSize="sm" noOfLines={2}>
-          {prompt.content}
-        </Text>
+    <Tooltip label={prompt.name} hasArrow openDelay={300} placement="auto">
+      <Box
+        ref={setNodeRef}
+        style={style}
+        borderWidth="1px"
+        borderRadius="md"
+        p={3}
+        mb={2}
+        bg="white"
+        boxShadow="sm"
+        display="flex"
+        alignItems="center"
+        cursor="grab"
+        _hover={{ bg: 'gray.50' }}
+        {...attributes}
+        {...listeners}
+      >
+        <DragHandleIcon
+          mr={3}
+          color="gray.400"
+          data-testid={`drag-handle-${prompt.id}`} // Unique test ID for Cypress
+        />
+        <Box flex="1">
+          <Text fontWeight="bold" noOfLines={1}>
+            {prompt.name}
+          </Text>
+          <Text color="gray.600" fontSize="sm" noOfLines={2}>
+            {prompt.content}
+          </Text>
+        </Box>
       </Box>
-    </Box>
+    </Tooltip>
   );
 }
