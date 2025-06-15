@@ -398,7 +398,8 @@ function App() {
   }, [selectedPrompts, selectedPromptOrder, prompts]);
 
   return (
-    <Box p={4}>
+    <Box bg="gray.50" minH="100vh" py={6}>
+      <Box maxW="1200px" mx="auto" p={4}>
       <Heading as="h1" size="xl" mb={4} textAlign="center">
         Promptner
       </Heading>
@@ -472,6 +473,7 @@ function App() {
           onPromptsUpdate={handlePromptsUpdate}
         />
       </Modal>
+      </Box>
     </Box>
   );
 }

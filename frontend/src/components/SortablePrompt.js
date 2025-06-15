@@ -45,6 +45,7 @@ export function SortablePrompt({ prompt }) {
       p={3}
       mb={2}
       bg="white"
+      boxShadow="sm"
       display="flex"
       alignItems="center"
       cursor="grab"
