@@ -125,7 +125,8 @@ const readDirectory = async (dirPath, includeContents = true) => {
           const fileObj = { 
             path: relativePath, 
             size: fileSize,
-            isChecked: false 
+            isChecked: false,
+            isExcluded: false,
           };
           
           // Only include content if requested and file is text
@@ -190,11 +191,14 @@ const updateDirectoryPrompt = debounce(async (id, dirPath) => {
         return;
       }
       
-      // Create a map of existing files with their checked states
+      // Create a map of existing files with their checked / excluded states
       const existingFileMap = {};
       if (prompt.files && Array.isArray(prompt.files)) {
         prompt.files.forEach(file => {
-          existingFileMap[file.path] = file.isChecked;
+          existingFileMap[file.path] = {
+            isChecked: file.isChecked === true,
+            isExcluded: file.isExcluded === true,
+          };
         });
       }
       
@@ -204,7 +208,8 @@ const updateDirectoryPrompt = debounce(async (id, dirPath) => {
           // Preserve checked state for files that still exist
           const updatedFiles = newFiles.map(file => ({
             ...file,
-            isChecked: existingFileMap[file.path] === true
+            isChecked: existingFileMap[file.path]?.isChecked === true,
+            isExcluded: existingFileMap[file.path]?.isExcluded === true,
           }));
           
           // Update the prompt with the new file list
@@ -376,9 +381,10 @@ app.post('/directory', async (req, res) => {
 
 app.put('/directory/:id/file', (req, res) => {
   const { id } = req.params;
-  const { filePath, isChecked } = req.body;
-  if (!filePath || typeof isChecked !== 'boolean') {
-    return res.status(400).json({ error: 'File path and isChecked are required' });
+  const { filePath, isChecked, isExcluded } = req.body;
+
+  if (!filePath || (isChecked === undefined && isExcluded === undefined)) {
+    return res.status(400).json({ error: 'filePath and at least one of isChecked / isExcluded are required' });
   }
 
   getPrompts((err, prompts) => {
@@ -391,9 +397,15 @@ app.put('/directory/:id/file', (req, res) => {
       return res.status(404).json({ error: 'Directory prompt not found' });
     }
 
-    const updatedFiles = prompt.files.map(file =>
-      file.path === filePath ? { ...file, isChecked } : file
-    );
+    const updatedFiles = prompt.files.map(file => {
+      if (file.path !== filePath) return file;
+      return {
+        ...file,
+        isChecked: isChecked !== undefined ? isChecked : file.isChecked,
+        isExcluded: isExcluded !== undefined ? isExcluded : file.isExcluded,
+      };
+    });
+
     updatePrompt(id, prompt.name, prompt.content, prompt.tags, updatedFiles, (updateErr) => {
       if (updateErr) {
         console.error('Database error:', updateErr.message);
@@ -427,6 +439,39 @@ app.put('/directory/:id/files/bulk', (req, res) => {
     // Update all files to the same checked state
     const updatedFiles = prompt.files.map(file => ({ ...file, isChecked }));
     
+    updatePrompt(id, prompt.name, prompt.content, prompt.tags, updatedFiles, (updateErr) => {
+      if (updateErr) {
+        console.error('Database error:', updateErr.message);
+        return res.status(500).json({ error: 'Failed to update file states: ' + updateErr.message });
+      }
+      res.status(204).send();
+    });
+  });
+});
+
+// Add a new endpoint for bulk exclude updates
+app.put('/directory/:id/files/exclude-bulk', (req, res) => {
+  const { id } = req.params;
+  const { isExcluded, filePaths } = req.body;
+
+  if (typeof isExcluded !== 'boolean' || !Array.isArray(filePaths)) {
+    return res.status(400).json({ error: 'isExcluded boolean and filePaths array are required' });
+  }
+
+  getPrompts((err, prompts) => {
+    if (err) {
+      console.error('Database error:', err.message);
+      return res.status(500).json({ error: 'Failed to fetch prompts: ' + err.message });
+    }
+    const prompt = prompts.find(p => p.id === parseInt(id));
+    if (!prompt || !prompt.isDirectory) {
+      return res.status(404).json({ error: 'Directory prompt not found' });
+    }
+
+    const updatedFiles = prompt.files.map(file =>
+      filePaths.includes(file.path) ? { ...file, isExcluded } : file
+    );
+
     updatePrompt(id, prompt.name, prompt.content, prompt.tags, updatedFiles, (updateErr) => {
       if (updateErr) {
         console.error('Database error:', updateErr.message);

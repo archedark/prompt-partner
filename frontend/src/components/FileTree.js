@@ -15,6 +15,7 @@
  * - expandedStates: Object mapping file paths to boolean (expanded state)
  * - onToggleExpand: Function to toggle file/directory expansion state
  * - onFileExcludeToggle: Function to toggle file exclusion
+ * - onBulkFileExcludeToggle: Function to toggle all files in a directory's exclusion state
  *
  * @notes
  * - Builds a tree from flat file paths by splitting and nesting.
@@ -52,6 +53,7 @@ const FileTree = ({
   expandedStates, 
   onToggleExpand,
   onFileExcludeToggle,
+  onBulkFileExcludeToggle,
 }) => {
   /**
    * Calculate if all files are checked, none are checked, or some are checked
@@ -178,24 +180,20 @@ const FileTree = ({
     // If none are excluded, exclude all; otherwise include all
     const newStateShouldBeExcluded = dirExcludeStatus === 'none';
 
-    // Update all files in this directory
-    node.files.forEach(file => {
-      if ((file.isExcluded || false) !== newStateShouldBeExcluded) {
-        onFileExcludeToggle(promptId, file.path);
-      }
-    });
+    // Collect affected file paths
+    const affectedPaths = [];
 
-    // Recursively update subdirectories
-    const updateFilesInChildren = (childNode) => {
-      childNode.files.forEach(file => {
-        if ((file.isExcluded || false) !== newStateShouldBeExcluded) {
-          onFileExcludeToggle(promptId, file.path);
-        }
-      });
-      Object.values(childNode.children).forEach(updateFilesInChildren);
+    const collectPaths = (currentNode) => {
+      currentNode.files.forEach(file => affectedPaths.push(file.path));
+      Object.values(currentNode.children).forEach(collectPaths);
     };
 
-    Object.values(node.children).forEach(updateFilesInChildren);
+    collectPaths(node);
+
+    // Trigger bulk backend update (will optimistically update UI in App)
+    if (onBulkFileExcludeToggle) {
+      onBulkFileExcludeToggle(promptId, affectedPaths, newStateShouldBeExcluded);
+    }
   };
 
   /**

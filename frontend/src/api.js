@@ -136,12 +136,16 @@ export const setDirectory = async (path) => {
  * @param {boolean} isChecked - New checkbox state
  * @returns {Promise<void>}
  */
-export const updateDirectoryFileState = async (id, filePath, isChecked) => {
+export const updateDirectoryFileState = async (id, filePath, { isChecked, isExcluded }) => {
   try {
+    const body = { filePath };
+    if (isChecked !== undefined) body.isChecked = isChecked;
+    if (isExcluded !== undefined) body.isExcluded = isExcluded;
+
     const response = await fetch(`${API_URL}/directory/${id}/file`, {
       method: 'PUT',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ filePath, isChecked }),
+      body: JSON.stringify(body),
     });
     if (!response.ok) {
       const errorData = await response.json();
@@ -151,6 +155,18 @@ export const updateDirectoryFileState = async (id, filePath, isChecked) => {
     console.error('API error:', error.message);
     throw error;
   }
+};
+
+/**
+ * @function updateDirectoryFileExcludeState
+ * @description Convenience wrapper for only exclude toggling
+ * @param {number} id - Directory prompt ID
+ * @param {string} filePath - File path within directory
+ * @param {boolean} isExcluded - New exclude state
+ * @returns {Promise<void>}
+ */
+export const updateDirectoryFileExcludeState = async (id, filePath, isExcluded) => {
+  return updateDirectoryFileState(id, filePath, { isExcluded });
 };
 
 /**
@@ -226,6 +242,31 @@ export const refreshDirectoryPrompt = async (directoryId) => {
     }
     
     return await response.json();
+  } catch (error) {
+    console.error('API error:', error.message);
+    throw error;
+  }
+};
+
+/**
+ * @function updateDirectoryFilesExcludeBulk
+ * @description Bulk updates exclusion state for a set of files
+ * @param {number} id - Directory prompt ID
+ * @param {Array<string>} filePaths - File paths to update
+ * @param {boolean} isExcluded - Whether to exclude or include
+ * @returns {Promise<void>}
+ */
+export const updateDirectoryFilesExcludeBulk = async (id, filePaths, isExcluded) => {
+  try {
+    const response = await fetch(`${API_URL}/directory/${id}/files/exclude-bulk`, {
+      method: 'PUT',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ filePaths, isExcluded }),
+    });
+    if (!response.ok) {
+      const errorData = await response.json();
+      throw new Error(errorData.error || 'Failed to update file states');
+    }
   } catch (error) {
     console.error('API error:', error.message);
     throw error;
