@@ -61,7 +61,7 @@ const SelectedPromptList = ({ selectedPrompts, prompts, onReorder }) => {
     .filter(Boolean);
 
   return (
-    <Box data-testid="selected-prompts-order">
+    <Box data-testid="selected-prompts-order" bg="white" p={4} borderRadius="md" boxShadow="sm">
       <Heading as="h2" size="md" mb={3}>
         Selected Prompts Order
       </Heading>

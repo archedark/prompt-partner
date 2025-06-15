@@ -135,7 +135,7 @@ const PromptList = ({
   };
 
   return (
-    <Box>
+    <Box bg="white" p={4} borderRadius="md" boxShadow="sm">
       <Heading as="h2" size="md" mb={3}>
         Prompts
       </Heading>
