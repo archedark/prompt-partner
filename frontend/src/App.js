@@ -229,6 +229,12 @@ function App() {
 
   const handleCollapseAll = () => setExpandedStates({});
 
+  // Remove a prompt from the selected list
+  const handleRemoveSelectedPrompt = (id) => {
+    setSelectedPromptOrder(prev => prev.filter(pid => pid !== id));
+    setSelectedPrompts(prev => prev.filter(pid => pid !== id));
+  };
+
   const handleFileCheckboxChange = async (promptId, filePath) => {
     const prompt = prompts.find(p => p.id === promptId);
     if (!prompt || !prompt.isDirectory) return;
@@ -565,6 +571,7 @@ function App() {
               selectedPrompts={selectedPromptOrder}
               prompts={prompts}
               onReorder={setSelectedPromptOrder}
+              onRemove={handleRemoveSelectedPrompt}
             />
           </Box>
         </Flex>

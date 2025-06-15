@@ -7,10 +7,11 @@
  * - React: For component rendering
  * - @dnd-kit/sortable: For drag-and-drop functionality
  * - @dnd-kit/utilities: For CSS transform utilities
- * - Chakra UI (Box, Text, DragHandleIcon, Tooltip): UI components and icons
+ * - Chakra UI (Box, Text, DragHandleIcon, Tooltip, IconButton): UI components and icons
  *
  * @props
  * - prompt: Object containing prompt details (id, name, content)
+ * - onRemove: Function to remove the prompt from the SelectedPromptList
  *
  * @notes
  * - Uses useSortable to enable dragging with a handle (DragHandleIcon).
@@ -19,10 +20,10 @@
 import React from 'react';
 import { useSortable } from '@dnd-kit/sortable';
 import { CSS } from '@dnd-kit/utilities';
-import { Box, Text, Tooltip } from '@chakra-ui/react';
-import { DragHandleIcon } from '@chakra-ui/icons';
+import { Box, Text, Tooltip, IconButton } from '@chakra-ui/react';
+import { DragHandleIcon, CloseIcon } from '@chakra-ui/icons';
 
-export function SortablePrompt({ prompt }) {
+export function SortablePrompt({ prompt, onRemove }) {
   const {
     attributes,
     listeners,
@@ -51,6 +52,8 @@ export function SortablePrompt({ prompt }) {
         alignItems="center"
         cursor="grab"
         _hover={{ bg: 'gray.50' }}
+        position="relative"
+        w="full"
         {...attributes}
         {...listeners}
       >
@@ -67,6 +70,23 @@ export function SortablePrompt({ prompt }) {
             {prompt.content}
           </Text>
         </Box>
+        {onRemove && (
+          <IconButton
+            aria-label="Remove prompt"
+            icon={<CloseIcon />}
+            size="sm"
+            variant="ghost"
+            position="absolute"
+            top="6px"
+            right="6px"
+            onPointerDown={(e) => e.stopPropagation()}
+            onClick={(e) => {
+              e.stopPropagation();
+              onRemove(prompt.id);
+            }}
+            data-testid={`remove-selected-${prompt.id}`}
+          />
+        )}
       </Box>
     </Tooltip>
   );
