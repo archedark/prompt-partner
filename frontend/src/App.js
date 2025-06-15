@@ -38,7 +38,7 @@ import PromptEditor from './components/PromptEditor';
 import MasterPrompt from './components/MasterPrompt';
 import SelectedPromptList from './components/SelectedPromptList';
 import DirectoryManager from './components/DirectoryManager';
-import { getPrompts, createPrompt, updatePrompt, deletePrompt, setDirectory, updateDirectoryFileState, getFileContent, updateAllDirectoryFileStates, refreshDirectoryPrompt } from './api';
+import { getPrompts, createPrompt, updatePrompt, deletePrompt, setDirectory, updateDirectoryFileState, updateDirectoryFileExcludeState, getFileContent, updateAllDirectoryFileStates, refreshDirectoryPrompt, updateDirectoryFilesExcludeBulk } from './api';
 
 function App() {
   const [prompts, setPrompts] = useState([]);
@@ -230,7 +230,7 @@ function App() {
     const newCheckedState = !file.isChecked;
 
     try {
-      await updateDirectoryFileState(promptId, filePath, newCheckedState);
+      await updateDirectoryFileState(promptId, filePath, { isChecked: newCheckedState });
       setPrompts(prevPrompts =>
         prevPrompts.map(p =>
           p.id === promptId
@@ -280,6 +280,96 @@ function App() {
     }
   };
 
+  const handleBulkFileExcludeToggle = async (promptId, filePaths, isExcluded) => {
+    // Optimistic UI update
+    setPrompts(prevPrompts =>
+      prevPrompts.map(p =>
+        p.id === promptId
+          ? {
+              ...p,
+              files: p.files.map(f =>
+                filePaths.includes(f.path) ? { ...f, isExcluded } : f
+              ),
+            }
+          : p
+      )
+    );
+
+    try {
+      await updateDirectoryFilesExcludeBulk(promptId, filePaths, isExcluded);
+    } catch (error) {
+      toast({
+        title: 'Error Updating Exclude State',
+        description: error.message,
+        status: 'error',
+        duration: 3000,
+        isClosable: true,
+      });
+      // On failure, revert
+      setPrompts(prevPrompts =>
+        prevPrompts.map(p =>
+          p.id === promptId
+            ? {
+                ...p,
+                files: p.files.map(f =>
+                  filePaths.includes(f.path) ? { ...f, isExcluded: !isExcluded } : f
+                ),
+              }
+            : p
+        )
+      );
+    }
+  };
+
+  const handleFileExcludeToggle = async (promptId, filePath, options = {}) => {
+    const prompt = prompts.find(p => p.id === promptId);
+    if (!prompt || !prompt.isDirectory) return;
+
+    const file = prompt.files.find(f => f.path === filePath);
+    const newExcludedState = !(file?.isExcluded || false);
+
+    // Optimistic UI update
+    setPrompts(prevPrompts =>
+      prevPrompts.map(p =>
+        p.id === promptId
+          ? {
+              ...p,
+              files: p.files.map(f =>
+                f.path === filePath ? { ...f, isExcluded: newExcludedState } : f
+              ),
+            }
+          : p
+      )
+    );
+
+    if (!options.silent) {
+      try {
+        await updateDirectoryFileExcludeState(promptId, filePath, newExcludedState);
+      } catch (error) {
+        toast({
+          title: 'Error Updating Exclude State',
+          description: error.message,
+          status: 'error',
+          duration: 3000,
+          isClosable: true,
+        });
+        // Revert UI on failure
+        setPrompts(prevPrompts =>
+          prevPrompts.map(p =>
+            p.id === promptId
+              ? {
+                  ...p,
+                  files: p.files.map(f =>
+                    f.path === filePath ? { ...f, isExcluded: !newExcludedState } : f
+                  ),
+                }
+              : p
+          )
+        );
+      }
+    }
+  };
+
   const handlePromptsUpdate = (updatedPrompts) => {
     setPrompts(updatedPrompts);
   };
@@ -306,7 +396,9 @@ function App() {
              // Exclude package-lock.json files
              !file.path.endsWith('package-lock.json') &&
              // Exclude log files
-             !file.path.endsWith('.log');
+             !file.path.endsWith('.log') &&
+             // Exclude files marked as excluded
+             !(file.isExcluded);
     });
 
     const tree = {};
@@ -345,7 +437,7 @@ function App() {
       if (prompt.isDirectory) {
         // Get checked files (metadata only at this point)
         const checkedFiles = prompt.files.filter(f => 
-          f.isChecked && !f.path.endsWith('package-lock.json') && !f.path.endsWith('.log')
+          f.isChecked && !f.isExcluded && !f.path.endsWith('package-lock.json') && !f.path.endsWith('.log')
         );
         if (!checkedFiles.length && !selectedPrompts.includes(id)) return '';
         
@@ -441,6 +533,8 @@ function App() {
             onCollapseAll={handleCollapseAll}
             onFileCheckboxChange={handleFileCheckboxChange}
             onBulkFileCheckboxChange={handleBulkFileCheckboxChange}
+            onFileExcludeToggle={handleFileExcludeToggle}
+            onBulkFileExcludeToggle={handleBulkFileExcludeToggle}
             onRefreshPrompts={refreshPrompts}
           />
         </Box>
