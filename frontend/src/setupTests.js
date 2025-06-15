@@ -41,24 +41,38 @@ jest.mock('@chakra-ui/react', () => ({
   useToast: () => mockFunction,
   useBreakpointValue: (values) => values.md || values.base || 'row',
   Box: ({ children, ...props }) => <div {...props}>{children}</div>,
-  Button: ({ children, ...props }) => <button {...props}>{children}</button>,
+  Button: ({ children, isDisabled, ...props }) => (
+    <button {...props} disabled={isDisabled}>{children}</button>
+  ),
   Heading: ({ children, ...props }) => <h2 {...props}>{children}</h2>,
   Textarea: ({ children, ...props }) => <textarea {...props}>{children}</textarea>,
   Text: ({ children, ...props }) => <p {...props}>{children}</p>,
   VStack: ({ children, ...props }) => <div {...props}>{children}</div>,
   HStack: ({ children, ...props }) => <div {...props}>{children}</div>,
   Checkbox: ({ children, isChecked, onChange, ...props }) => (
-    <input 
-      type="checkbox" 
-      checked={isChecked} 
+    <input
+      type="checkbox"
+      checked={isChecked}
       onChange={onChange}
       {...props}
     >{children}</input>
   ),
-  IconButton: ({ children, ...props }) => <button {...props}>{children}</button>,
+  IconButton: ({ children, isDisabled, ...props }) => (
+    <button {...props} disabled={isDisabled}>{children}</button>
+  ),
   Stack: ({ children, ...props }) => <div {...props}>{children}</div>,
   Flex: ({ children, ...props }) => <div {...props}>{children}</div>,
   Input: ({ children, ...props }) => <input {...props}>{children}</input>,
+  Modal: ({ children, ...props }) => <div {...props}>{children}</div>,
+  ModalOverlay: ({ children, ...props }) => <div {...props}>{children}</div>,
+  ModalContent: ({ children, ...props }) => <div {...props}>{children}</div>,
+  ModalHeader: ({ children, ...props }) => <div {...props}>{children}</div>,
+  ModalCloseButton: (props) => <button {...props}>X</button>,
+  ModalBody: ({ children, ...props }) => <div {...props}>{children}</div>,
+  ModalFooter: ({ children, ...props }) => <div {...props}>{children}</div>,
+  Tooltip: ({ children, ...props }) => <div {...props}>{children}</div>,
+  Badge: ({ children, ...props }) => <span {...props}>{children}</span>,
+  Spinner: (props) => <div {...props}>Spinner</div>,
   useCheckboxGroup: () => ({
     value: [],
     onChange: mockFunction,
@@ -82,7 +96,7 @@ if (!global.navigator) {
   global.navigator = {};
 }
 global.navigator.clipboard = {
-  writeText: jest.fn(),
+  writeText: jest.fn().mockResolvedValue(),
 };
 
 // Custom render function to wrap components with ChakraProvider

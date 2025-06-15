@@ -10,6 +10,7 @@
  * - onAddPrompt: Function to handle creation of a new prompt
  * - onEditPrompt: Function to handle editing of an existing prompt
  * - editingPrompt: The prompt object currently being edited, or null
+ * - hideHeading: Boolean to optionally suppress the internal heading
  *
  * @notes
  * - If editingPrompt is provided, the form is in "edit mode" and calls onEditPrompt.
@@ -26,7 +27,7 @@ import {
   Stack,
 } from '@chakra-ui/react';
 
-const PromptEditor = ({ onAddPrompt, onEditPrompt, editingPrompt }) => {
+const PromptEditor = ({ onAddPrompt, onEditPrompt, editingPrompt, hideHeading = false }) => {
   const [name, setName] = useState('');
   const [content, setContent] = useState('');
   const [tags, setTags] = useState('');
@@ -67,10 +68,12 @@ const PromptEditor = ({ onAddPrompt, onEditPrompt, editingPrompt }) => {
   };
 
   return (
-    <Box>
-      <Heading as="h2" size="md" mb={3}>
-        {editingPrompt ? 'Edit Prompt' : 'Add Prompt'}
-      </Heading>
+    <Box bg="white" p={4} borderRadius="md" boxShadow="sm">
+      {!hideHeading && (
+        <Heading as="h2" size="md" mb={3}>
+          {editingPrompt ? 'Edit Prompt' : 'Add Prompt'}
+        </Heading>
+      )}
       <form onSubmit={handleSubmit}>
         <Stack spacing={3}>
           <Input

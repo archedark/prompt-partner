@@ -85,7 +85,7 @@ const MasterPrompt = ({ selectedPromptsText }) => {
   };
 
   return (
-    <Box>
+    <Box bg="white" p={4} borderRadius="md" boxShadow="sm">
       <HStack mb={2} justify="space-between">
         <Heading as="h2" size="md">
           Master Prompt
