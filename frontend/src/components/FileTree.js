@@ -14,6 +14,7 @@
  * - onBulkFileCheckboxChange: Function to update all file checkbox states at once
  * - expandedStates: Object mapping file paths to boolean (expanded state)
  * - onToggleExpand: Function to toggle file/directory expansion state
+ * - onFileExcludeToggle: Function to toggle file exclusion
  *
  * @notes
  * - Builds a tree from flat file paths by splitting and nesting.
@@ -38,7 +39,9 @@ import {
   ChevronDownIcon, 
   ChevronRightIcon, 
   CheckIcon, 
-  SmallCloseIcon 
+  SmallCloseIcon,
+  ViewIcon,
+  ViewOffIcon,
 } from '@chakra-ui/icons';
 
 const FileTree = ({ 
@@ -47,7 +50,8 @@ const FileTree = ({
   onFileCheckboxChange, 
   onBulkFileCheckboxChange,
   expandedStates, 
-  onToggleExpand 
+  onToggleExpand,
+  onFileExcludeToggle,
 }) => {
   /**
    * Calculate if all files are checked, none are checked, or some are checked
@@ -136,6 +140,65 @@ const FileTree = ({
   };
 
   /**
+   * @function getDirectoryExcludeStatus
+   * @description Determines if all, some, or none of the files in a directory are excluded
+   * @param {Object} node - Directory node
+   * @returns {string} 'all', 'some', or 'none'
+   */
+  const getDirectoryExcludeStatus = (node) => {
+    const allFiles = [];
+
+    // Add files directly in this directory
+    allFiles.push(...node.files);
+
+    // Recursively add files from subdirectories
+    const addFilesFromChildren = (childNode) => {
+      allFiles.push(...childNode.files);
+      Object.values(childNode.children).forEach(addFilesFromChildren);
+    };
+
+    Object.values(node.children).forEach(addFilesFromChildren);
+
+    if (allFiles.length === 0) return 'none';
+
+    const excludedCount = allFiles.filter(file => file.isExcluded).length;
+    if (excludedCount === 0) return 'none';
+    if (excludedCount === allFiles.length) return 'all';
+    return 'some';
+  };
+
+  /**
+   * @function handleDirectoryExcludeToggle
+   * @description Excludes or includes all files in a specific directory
+   * @param {Object} node - Directory node
+   * @param {string} path - Directory path
+   */
+  const handleDirectoryExcludeToggle = (node, path) => {
+    const dirExcludeStatus = getDirectoryExcludeStatus(node);
+    // If none are excluded, exclude all; otherwise include all
+    const newStateShouldBeExcluded = dirExcludeStatus === 'none';
+
+    // Update all files in this directory
+    node.files.forEach(file => {
+      if ((file.isExcluded || false) !== newStateShouldBeExcluded) {
+        onFileExcludeToggle(promptId, file.path);
+      }
+    });
+
+    // Recursively update subdirectories
+    const updateFilesInChildren = (childNode) => {
+      childNode.files.forEach(file => {
+        if ((file.isExcluded || false) !== newStateShouldBeExcluded) {
+          onFileExcludeToggle(promptId, file.path);
+        }
+      });
+      Object.values(childNode.children).forEach(updateFilesInChildren);
+    };
+
+    Object.values(node.children).forEach(updateFilesInChildren);
+  };
+
+  /**
    * @function buildTree
    * @description Converts a flat list of file paths into a nested tree structure
    * @param {Array} fileList - Flat array of file objects
@@ -201,8 +264,9 @@ const FileTree = ({
     const isDirectory = Object.keys(node.children).length > 0 || node.files.length > 0;
     const isExpanded = expandedStates[fullPath] || false;
     
-    // For directories, determine check status
+    // For directories, determine check and exclude statuses
     const dirCheckStatus = isDirectory ? getDirectoryCheckStatus(node) : 'none';
+    const dirExcludeStatus = isDirectory ? getDirectoryExcludeStatus(node) : 'none';
 
     return (
       <VStack key={fullPath} align="stretch" spacing={1} mt={1}>
@@ -235,7 +299,24 @@ const FileTree = ({
                 />
               </Tooltip>
               
-              <Text fontWeight="bold">{node.name}/</Text>
+              {/* Directory exclude/include toggle */}
+              <Tooltip 
+                label={dirExcludeStatus === 'none' ? 'Exclude Folder from Master Prompt' : dirExcludeStatus === 'all' ? 'Include Folder in Master Prompt' : 'Partially Excluded – Click to Toggle'}
+                placement="top"
+                hasArrow
+              >
+                <IconButton
+                  aria-label={dirExcludeStatus === 'none' ? 'Exclude Folder from Master Prompt' : 'Include Folder in Master Prompt'}
+                  icon={dirExcludeStatus === 'none' ? <ViewIcon /> : <ViewOffIcon />} 
+                  size="xs"
+                  colorScheme={dirExcludeStatus === 'none' ? 'gray' : dirExcludeStatus === 'all' ? 'red' : 'orange'}
+                  onClick={() => handleDirectoryExcludeToggle(node, fullPath)}
+                  variant="ghost"
+                  mr={2}
+                />
+              </Tooltip>
+              
+              <Text fontWeight="bold" color={dirExcludeStatus === 'all' ? 'gray.400' : 'inherit'}>{node.name}/</Text>
             </Flex>
             {isExpanded && (
               <Box pl={4}>
@@ -275,7 +356,22 @@ const FileTree = ({
           onChange={() => onFileCheckboxChange(promptId, file.path)}
           mr={2}
         />
-        <Text fontSize="sm" noOfLines={1} title={file.path}>
+        <Tooltip
+          label={file.isExcluded ? 'Include File in Master Prompt' : 'Exclude File from Master Prompt'}
+          placement="top"
+          hasArrow
+        >
+          <IconButton
+            aria-label={file.isExcluded ? 'Include File in Master Prompt' : 'Exclude File from Master Prompt'}
+            icon={file.isExcluded ? <ViewOffIcon /> : <ViewIcon />}
+            size="xs"
+            colorScheme={file.isExcluded ? 'red' : 'gray'}
+            onClick={() => onFileExcludeToggle(promptId, file.path)}
+            variant="ghost"
+            mr={2}
+          />
+        </Tooltip>
+        <Text fontSize="sm" noOfLines={1} title={file.path} color={file.isExcluded ? 'gray.400' : 'inherit'}>
           {file.name}{fileSize}
         </Text>
       </Flex>

@@ -280,6 +280,23 @@ function App() {
     }
   };
 
+  const handleFileExcludeToggle = (promptId, filePath) => {
+    setPrompts(prevPrompts =>
+      prevPrompts.map(p =>
+        p.id === promptId
+          ? {
+              ...p,
+              files: p.files.map(f =>
+                f.path === filePath
+                  ? { ...f, isExcluded: !(f.isExcluded || false) }
+                  : f
+              ),
+            }
+          : p
+      )
+    );
+  };
+
   const handlePromptsUpdate = (updatedPrompts) => {
     setPrompts(updatedPrompts);
   };
@@ -306,7 +323,9 @@ function App() {
              // Exclude package-lock.json files
              !file.path.endsWith('package-lock.json') &&
              // Exclude log files
-             !file.path.endsWith('.log');
+             !file.path.endsWith('.log') &&
+             // Exclude files marked as excluded
+             !(file.isExcluded);
     });
 
     const tree = {};
@@ -345,7 +364,7 @@ function App() {
       if (prompt.isDirectory) {
         // Get checked files (metadata only at this point)
         const checkedFiles = prompt.files.filter(f => 
-          f.isChecked && !f.path.endsWith('package-lock.json') && !f.path.endsWith('.log')
+          f.isChecked && !f.isExcluded && !f.path.endsWith('package-lock.json') && !f.path.endsWith('.log')
         );
         if (!checkedFiles.length && !selectedPrompts.includes(id)) return '';
         
@@ -440,6 +459,7 @@ function App() {
             onCollapseAll={handleCollapseAll}
             onFileCheckboxChange={handleFileCheckboxChange}
             onBulkFileCheckboxChange={handleBulkFileCheckboxChange}
+            onFileExcludeToggle={handleFileExcludeToggle}
             onRefreshPrompts={refreshPrompts}
           />
         </Box>

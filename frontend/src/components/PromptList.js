@@ -23,6 +23,7 @@
  * - onCollapseAll: Function to collapse all prompts
  * - onFileCheckboxChange: Function to toggle file checkbox state in directory prompts
  * - onBulkFileCheckboxChange: Function to toggle bulk file checkbox state in directory prompts
+ * - onFileExcludeToggle: Function to toggle file exclusion state in directory prompts
  * - onRefreshPrompts: Function to refresh prompts after directory refresh
  *
  * @notes
@@ -67,6 +68,7 @@ const PromptList = ({
   onCollapseAll,
   onFileCheckboxChange,
   onBulkFileCheckboxChange,
+  onFileExcludeToggle,
   onRefreshPrompts,
 }) => {
   const toast = useToast();
@@ -245,6 +247,7 @@ const PromptList = ({
                       promptId={prompt.id}
                       onFileCheckboxChange={onFileCheckboxChange}
                       onBulkFileCheckboxChange={onBulkFileCheckboxChange}
+                      onFileExcludeToggle={onFileExcludeToggle}
                       expandedStates={expandedFileStates}
                       onToggleExpand={handleToggleFileExpand}
                     />
