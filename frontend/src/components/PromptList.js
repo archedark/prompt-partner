@@ -17,6 +17,7 @@
  * - onSelectPrompt: Function to toggle prompt selection by ID
  * - onDeletePrompt: Function to delete a prompt by ID
  * - onEditPromptClick: Function to set editingPrompt state
+ * - onAddPromptClick: Function to add a new prompt
  * - onClearSelections: Function to clear all selections
  * - expandedStates: Object mapping prompt IDs to boolean (expanded state)
  * - onToggleExpand: Function to toggle prompt expansion state
@@ -52,6 +53,7 @@ import {
   ChevronUpIcon,
   CopyIcon,
   RepeatIcon,
+  AddIcon,
 } from '@chakra-ui/icons';
 import { countTokens, getTokenColorScheme } from '../utils/tokenizer';
 import FileTree from './FileTree';
@@ -63,6 +65,7 @@ const PromptList = ({
   onSelectPrompt,
   onDeletePrompt,
   onEditPromptClick,
+  onAddPromptClick,
   onClearSelections,
   expandedStates = {},
   onToggleExpand,
@@ -140,9 +143,20 @@ const PromptList = ({
 
   return (
     <Box bg="white" p={4} borderRadius="md" boxShadow="sm">
-      <Heading as="h2" size="md" mb={3}>
-        Prompts
-      </Heading>
+      <Flex align="center" justify="space-between" mb={3}>
+        <Heading as="h2" size="md" m={0}>
+          Prompts
+        </Heading>
+        <IconButton
+          aria-label="Add Prompt"
+          icon={<AddIcon />}
+          colorScheme="green"
+          variant="outline"
+          size="sm"
+          borderRadius="md"
+          onClick={onAddPromptClick}
+        />
+      </Flex>
       <Stack spacing={4} maxH="400px" overflowY="auto" pr={2} data-testid="prompt-list">
         {prompts.length === 0 && (
           <Text fontStyle="italic" color="gray.500">

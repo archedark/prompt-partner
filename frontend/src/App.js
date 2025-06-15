@@ -32,6 +32,10 @@ import {
   useToast,
   Modal,
   ModalOverlay,
+  ModalContent,
+  ModalHeader,
+  ModalCloseButton,
+  ModalBody,
 } from '@chakra-ui/react';
 import PromptList from './components/PromptList';
 import PromptEditor from './components/PromptEditor';
@@ -48,6 +52,7 @@ function App() {
   const [tagFilter, setTagFilter] = useState('');
   const [expandedStates, setExpandedStates] = useState({});
   const [isModalOpen, setIsModalOpen] = useState(false);
+  const [isPromptModalOpen, setIsPromptModalOpen] = useState(false);
   const [refreshInterval, setRefreshInterval] = useState(null);
   const toast = useToast();
 
@@ -115,6 +120,7 @@ function App() {
         duration: 2000,
         isClosable: true,
       });
+      setIsPromptModalOpen(false);
     } catch (error) {
       toast({
         title: 'Error Adding Prompt',
@@ -138,6 +144,7 @@ function App() {
         duration: 2000,
         isClosable: true,
       });
+      setIsPromptModalOpen(false);
     } catch (error) {
       toast({
         title: 'Error Updating Prompt',
@@ -489,6 +496,16 @@ function App() {
     // Include prompts in the dependency array to ensure updates when files change
   }, [selectedPrompts, selectedPromptOrder, prompts]);
 
+  const handleAddPromptClick = () => {
+    setEditingPrompt(null);
+    setIsPromptModalOpen(true);
+  };
+
+  const handleEditPromptClick = (promptObj) => {
+    setEditingPrompt(promptObj);
+    setIsPromptModalOpen(true);
+  };
+
   return (
     <Box bg="gray.50" minH="100vh" py={6}>
       <Box maxW="1500px" mx="auto" p={4}>
@@ -527,7 +544,8 @@ function App() {
             selectedPrompts={selectedPrompts}
             onSelectPrompt={handleSelectPrompt}
             onDeletePrompt={handleDeletePrompt}
-            onEditPromptClick={setEditingPrompt}
+            onEditPromptClick={handleEditPromptClick}
+            onAddPromptClick={handleAddPromptClick}
             onClearSelections={handleClearSelections}
             expandedStates={expandedStates}
             onToggleExpand={handleToggleExpand}
@@ -540,20 +558,13 @@ function App() {
           />
         </Box>
 
-        {/* Column 2: Selected order list and Add/Edit prompt */}
+        {/* Column 2: Prompt Order list */}
         <Flex direction="column" w={{ base: '100%', md: '260px' }} flexShrink={0} gap={6}>
           <Box>
             <SelectedPromptList
               selectedPrompts={selectedPromptOrder}
               prompts={prompts}
               onReorder={setSelectedPromptOrder}
-            />
-          </Box>
-          <Box>
-            <PromptEditor
-              onAddPrompt={handleAddPrompt}
-              onEditPrompt={handleEditPrompt}
-              editingPrompt={editingPrompt}
             />
           </Box>
         </Flex>
@@ -570,6 +581,23 @@ function App() {
           onClose={() => setIsModalOpen(false)}
           onPromptsUpdate={handlePromptsUpdate}
         />
+      </Modal>
+
+      {/* Prompt Add/Edit Modal */}
+      <Modal isOpen={isPromptModalOpen} onClose={() => setIsPromptModalOpen(false)}>
+        <ModalOverlay />
+        <ModalContent maxW="600px">
+          <ModalHeader>{editingPrompt ? 'Edit Prompt' : 'Add Prompt'}</ModalHeader>
+          <ModalCloseButton />
+          <ModalBody>
+            <PromptEditor
+              onAddPrompt={handleAddPrompt}
+              onEditPrompt={handleEditPrompt}
+              editingPrompt={editingPrompt}
+              hideHeading={true}
+            />
+          </ModalBody>
+        </ModalContent>
       </Modal>
       </Box>
     </Box>
