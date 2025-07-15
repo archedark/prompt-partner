@@ -13,6 +13,7 @@
  * - selectedPrompts: Array of selected prompt IDs
  * - prompts: Array of all prompt objects
  * - onReorder: Function to handle reordering of selected prompts
+ * - onRemove: Function to handle removal of a selected prompt
  *
  * @notes
  * - Uses @dnd-kit for drag-and-drop with Pointer and Keyboard sensors.
@@ -37,7 +38,7 @@ import {
 import { SortablePrompt } from './SortablePrompt';
 import { Box, Heading, Text } from '@chakra-ui/react';
 
-const SelectedPromptList = ({ selectedPrompts, prompts, onReorder }) => {
+const SelectedPromptList = ({ selectedPrompts, prompts, onReorder, onRemove }) => {
   const sensors = useSensors(
     useSensor(PointerSensor),
     useSensor(KeyboardSensor, {
@@ -61,9 +62,9 @@ const SelectedPromptList = ({ selectedPrompts, prompts, onReorder }) => {
     .filter(Boolean);
 
   return (
-    <Box data-testid="selected-prompts-order">
+    <Box data-testid="selected-prompts-order" bg="white" p={4} borderRadius="md" boxShadow="sm">
       <Heading as="h2" size="md" mb={3}>
-        Selected Prompts Order
+        Prompt Order
       </Heading>
       {selectedPromptObjects.length === 0 ? (
         <Text fontStyle="italic" color="gray.500">
@@ -80,13 +81,17 @@ const SelectedPromptList = ({ selectedPrompts, prompts, onReorder }) => {
             strategy={verticalListSortingStrategy}
           >
             {selectedPromptObjects.map((prompt) => (
-              <SortablePrompt key={prompt.id} prompt={prompt} />
+              <SortablePrompt key={prompt.id} prompt={prompt} onRemove={onRemove} />
             ))}
           </SortableContext>
         </DndContext>
       )}
     </Box>
   );
+};
+
+SelectedPromptList.defaultProps = {
+  onRemove: () => {},
 };
 
 export default SelectedPromptList;

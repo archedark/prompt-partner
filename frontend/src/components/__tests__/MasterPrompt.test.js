@@ -24,7 +24,7 @@ describe('<MasterPrompt />', () => {
     // Make sure navigator.clipboard.writeText is a Jest mock so we can check calls
     Object.defineProperty(navigator, 'clipboard', {
       value: {
-        writeText: jest.fn(),
+        writeText: jest.fn().mockResolvedValue(),
       },
       writable: true,
     });

@@ -32,6 +32,10 @@ import {
   useToast,
   Modal,
   ModalOverlay,
+  ModalContent,
+  ModalHeader,
+  ModalCloseButton,
+  ModalBody,
 } from '@chakra-ui/react';
 import PromptList from './components/PromptList';
 import PromptEditor from './components/PromptEditor';
@@ -48,6 +52,7 @@ function App() {
   const [tagFilter, setTagFilter] = useState('');
   const [expandedStates, setExpandedStates] = useState({});
   const [isModalOpen, setIsModalOpen] = useState(false);
+  const [isPromptModalOpen, setIsPromptModalOpen] = useState(false);
   const [refreshInterval, setRefreshInterval] = useState(null);
   const toast = useToast();
 
@@ -115,6 +120,7 @@ function App() {
         duration: 2000,
         isClosable: true,
       });
+      setIsPromptModalOpen(false);
     } catch (error) {
       toast({
         title: 'Error Adding Prompt',
@@ -138,6 +144,7 @@ function App() {
         duration: 2000,
         isClosable: true,
       });
+      setIsPromptModalOpen(false);
     } catch (error) {
       toast({
         title: 'Error Updating Prompt',
@@ -221,6 +228,12 @@ function App() {
   };
 
   const handleCollapseAll = () => setExpandedStates({});
+
+  // Remove a prompt from the selected list
+  const handleRemoveSelectedPrompt = (id) => {
+    setSelectedPromptOrder(prev => prev.filter(pid => pid !== id));
+    setSelectedPrompts(prev => prev.filter(pid => pid !== id));
+  };
 
   const handleFileCheckboxChange = async (promptId, filePath) => {
     const prompt = prompts.find(p => p.id === promptId);
@@ -489,8 +502,19 @@ function App() {
     // Include prompts in the dependency array to ensure updates when files change
   }, [selectedPrompts, selectedPromptOrder, prompts]);
 
+  const handleAddPromptClick = () => {
+    setEditingPrompt(null);
+    setIsPromptModalOpen(true);
+  };
+
+  const handleEditPromptClick = (promptObj) => {
+    setEditingPrompt(promptObj);
+    setIsPromptModalOpen(true);
+  };
+
   return (
-    <Box p={4}>
+    <Box bg="gray.50" minH="100vh" py={6}>
+      <Box maxW="1500px" mx="auto" p={4}>
       <Heading as="h1" size="xl" mb={4} textAlign="center">
         Promptner
       </Heading>
@@ -519,13 +543,15 @@ function App() {
       </HStack>
 
       <Flex direction={flexDirection} gap={6}>
+        {/* Column 1: Prompt list and file tree */}
         <Box flex="1" mb={{ base: 4, md: 0 }}>
           <PromptList
             prompts={filteredPrompts}
             selectedPrompts={selectedPrompts}
             onSelectPrompt={handleSelectPrompt}
             onDeletePrompt={handleDeletePrompt}
-            onEditPromptClick={setEditingPrompt}
+            onEditPromptClick={handleEditPromptClick}
+            onAddPromptClick={handleAddPromptClick}
             onClearSelections={handleClearSelections}
             expandedStates={expandedStates}
             onToggleExpand={handleToggleExpand}
@@ -538,25 +564,22 @@ function App() {
           />
         </Box>
 
-        <Flex direction="column" flex="1" gap={6}>
-          <Box>
-            <PromptEditor
-              onAddPrompt={handleAddPrompt}
-              onEditPrompt={handleEditPrompt}
-              editingPrompt={editingPrompt}
-            />
-          </Box>
+        {/* Column 2: Prompt Order list */}
+        <Flex direction="column" w={{ base: '100%', md: '260px' }} flexShrink={0} gap={6}>
           <Box>
             <SelectedPromptList
               selectedPrompts={selectedPromptOrder}
               prompts={prompts}
               onReorder={setSelectedPromptOrder}
+              onRemove={handleRemoveSelectedPrompt}
             />
           </Box>
-          <Box>
-            <MasterPrompt selectedPromptsText={masterPromptText} />
-          </Box>
         </Flex>
+
+        {/* Column 3: Master prompt and additional instructions */}
+        <Box flex="1">
+          <MasterPrompt selectedPromptsText={masterPromptText} />
+        </Box>
       </Flex>
 
       <Modal isOpen={isModalOpen} onClose={() => setIsModalOpen(false)}>
@@ -566,6 +589,24 @@ function App() {
           onPromptsUpdate={handlePromptsUpdate}
         />
       </Modal>
+
+      {/* Prompt Add/Edit Modal */}
+      <Modal isOpen={isPromptModalOpen} onClose={() => setIsPromptModalOpen(false)}>
+        <ModalOverlay />
+        <ModalContent maxW="600px">
+          <ModalHeader>{editingPrompt ? 'Edit Prompt' : 'Add Prompt'}</ModalHeader>
+          <ModalCloseButton />
+          <ModalBody>
+            <PromptEditor
+              onAddPrompt={handleAddPrompt}
+              onEditPrompt={handleEditPrompt}
+              editingPrompt={editingPrompt}
+              hideHeading={true}
+            />
+          </ModalBody>
+        </ModalContent>
+      </Modal>
+      </Box>
     </Box>
   );
 }
