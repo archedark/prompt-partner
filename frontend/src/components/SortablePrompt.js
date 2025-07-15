@@ -37,8 +37,14 @@ export function SortablePrompt({ prompt, onRemove }) {
     transition,
   };
 
+  // Limit tooltip preview to first N characters
+  const PREVIEW_CHAR_LIMIT = 250;
+  const tooltipPreview = prompt.content.length > PREVIEW_CHAR_LIMIT
+    ? `${prompt.content.slice(0, PREVIEW_CHAR_LIMIT)}…`
+    : prompt.content;
+
   return (
-    <Tooltip label={prompt.name} hasArrow openDelay={300} placement="auto">
+    <Tooltip label={tooltipPreview} hasArrow openDelay={300} placement="auto" maxW="400px" whiteSpace="pre-wrap">
       <Box
         ref={setNodeRef}
         style={style}
@@ -66,9 +72,12 @@ export function SortablePrompt({ prompt, onRemove }) {
           <Text fontWeight="bold" noOfLines={1}>
             {prompt.name}
           </Text>
-          <Text color="gray.600" fontSize="sm" noOfLines={2}>
-            {prompt.content}
-          </Text>
+          {/* For directory prompts keep the path snippet visible, otherwise hide to reduce clutter */}
+          {prompt.isDirectory && (
+            <Text color="gray.600" fontSize="sm" noOfLines={2}>
+              {prompt.content}
+            </Text>
+          )}
         </Box>
         {onRemove && (
           <IconButton
