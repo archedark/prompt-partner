@@ -6,12 +6,12 @@
 - Design a future-proof architecture for advanced features such as a "Group of Experts" workflow and XML-formatted code patches.
 
 ## Project Setup
-- [ ] **Environment Configuration**
-  - [ ] Add `OPENAI_API_KEY` and `GROK_API_KEY` to `.env` files.
-  - [ ] Ensure frontend variables use the `REACT_APP_` prefix (e.g., `REACT_APP_DEFAULT_LLM`).
-- [ ] **Dependencies**
-  - [ ] Backend: `openai`, `axios`, `xml2js`, `dotenv` (for env vars).
-  - [ ] Frontend: No new runtime deps initially (reuse `fetch`), but add `swr` or `react-query` later for streaming if needed.
+- [X] **Environment Configuration**
+  - [X] Add `OPENAI_API_KEY` and `GROK_API_KEY` to `.env` files.
+  - [X] Ensure frontend variables use the `REACT_APP_` prefix (e.g., `REACT_APP_DEFAULT_LLM`).
+- [X] **Dependencies**
+  - [X] Backend: `openai`, `axios`, `xml2js`, `dotenv` (for env vars).
+  - [X] Frontend: No new runtime deps initially (reuse `fetch`), but add `swr` or `react-query` later for streaming if needed.
 
 ## Backend Development
 1. **LLM Service Layer**
