@@ -1,69 +1,115 @@
 # LLM Integration Development Plan
 
-## Goals
-- Provide the ability to send the Master Prompt to a chosen Large Language Model (LLM) with a single click.
-- Support at least **OpenAI** and **Grok** at launch, with an easy path for adding more providers.
-- Design a future-proof architecture for advanced features such as a "Group of Experts" workflow and XML-formatted code patches.
+A milestone-driven roadmap that slices vertically through backend, frontend, and tests so each step is demo-ready and fully testable.
 
-## Project Setup
-- [X] **Environment Configuration**
-  - [X] Add `OPENAI_API_KEY` and `GROK_API_KEY` to `.env` files.
-  - [X] Ensure frontend variables use the `REACT_APP_` prefix (e.g., `REACT_APP_DEFAULT_LLM`).
-- [X] **Dependencies**
-  - [X] Backend: `openai`, `axios`, `xml2js`, `dotenv` (for env vars).
-  - [X] Frontend: No new runtime deps initially (reuse `fetch`), but add `swr` or `react-query` later for streaming if needed.
+---
+## [X] Milestone 0 – Groundwork
+* Environment variables (`OPENAI_API_KEY`, `GROK_API_KEY`, `REACT_APP_API_URL`, `REACT_APP_DEFAULT_LLM`)
+* Dependencies added to backend (`openai`, `axios`, `xml2js`, `dotenv`)
+* `.env.example` committed
 
-## Backend Development
-1. **LLM Service Layer**
-   - [ ] Create `services/llm.js` with wrapper functions:
-     - [ ] `sendToOpenAI(prompt, options)`
-     - [ ] `sendToGrok(prompt, options)`
-     - [ ] Normalize responses to `{ text, raw }`.
-   - [ ] Support streaming tokens (upgrade later if necessary).
-2. **API Routes**
-   - [ ] `POST /llm` – Body `{ engine, prompt, options }` → returns LLM response.
-   - [ ] Basic validation (engine allowed, prompt length, token count).
-3. **Error Handling**
-   - [ ] Map provider-specific errors to generic HTTP status codes + messages.
-4. **Group of Experts (Future)**
-   - [ ] `POST /llm/group` – Body `{ engine, prompt, n, aggregatorEngine }`.
-   - [ ] Spawn `n` parallel requests, collect responses, then send to `aggregatorEngine`.
-5. **XML Patch Support (Future)**
-   - [ ] Define XML schema for code patches (`<file path="...">…</file>`).
-   - [ ] Implement `parseXmlPatches(xml)` → list of patch objects.
-   - [ ] Add utility to apply patches to watched directory prompts (with safety checks).
+Deliverable: Project boots without errors; env configured.
 
-## Frontend Development
-1. **UI Components**
-   - [ ] `LLMSelector` – Dropdown for engines (OpenAI, Grok, …).
-   - [ ] "Send to LLM" button next to "Copy to Clipboard" in `MasterPrompt`.
-   - [ ] `LLMResponsePanel` – Displays streaming or final response with syntax highlighting.
-2. **State Management**
-   - [ ] Store selected LLM and response in `App.js` or Context.
-3. **API Integration**
-   - [ ] Add `sendPromptToLLM` in `frontend/src/api.js` to hit `POST /llm`.
-   - [ ] Handle loading / error / streaming states.
-4. **Group of Experts UI (Future)**
-   - [ ] Checkbox or modal to enable expert mode (`n = 4`).
-   - [ ] Progress indicators for each sub-request and final synthesis.
-5. **XML Patch Handling (Future)**
-   - [ ] On receiving an XML-formatted response, show "Apply Patch" modal.
-   - [ ] Allow user to review and accept/reject individual file changes.
+---
+## [ ] Milestone 1 – Ping-Pong with OpenAI
+Goal: User can send the Master Prompt to OpenAI and view the full reply.
 
-## Testing Stack
 ### Backend
-- [ ] Unit tests for `services/llm.js` (mock provider SDKs).
-- [ ] API tests for `/llm` and `/llm/group` using Supertest.
+1. `services/llm.js` – `sendToOpenAI(prompt)` (sync, no options)
+2. `POST /llm` – body `{ engine:"openai", prompt }` → returns `{ text }`
+3. Basic validation and `400` error handling
+
 ### Frontend
-- [ ] Component tests for `LLMSelector`, `LLMResponsePanel`, and send workflow.
-- [ ] Cypress E2E: Select LLM → send Master Prompt → receive response.
+1. "Send to LLM" button in `MasterPrompt`
+2. `api.js → sendPromptToLLM(engine, prompt)`
+3. Modal/toast displays returned text
 
-## Deployment
-- [ ] Update README with new env vars and usage instructions.
-- [ ] (Optional) Add a mock mode for offline demo/testing.
+### Tests
+* Unit: Mock OpenAI SDK → expect normalized `{ text }`
+* API: Supertest for happy/error paths
+* Cypress: create prompt → click send → see response text
 
-## Additional Enhancements
-- [ ] Add temperature, max-tokens, and system prompt controls.
-- [ ] Support Anthropic, Azure OpenAI, and local models.
-- [ ] Persist interaction history in SQLite for reference.
-- [ ] Token usage tracking and cost estimation per provider.
+---
+## [ ] Milestone 2 – Engine Selector + Grok
+Allows choosing between OpenAI and Grok.
+
+### Backend
+1. `sendToGrok(prompt)` using provider SDK or axios
+2. Extend `/llm` validation for `engine` values
+
+### Frontend
+1. `LLMSelector` dropdown (OpenAI | Grok)
+2. Persist choice in Context or `App.js`
+
+### Tests
+* Unit: mock Grok client
+* Cypress: switch engine → send → see correct stubbed reply
+
+### Notes
+* Here is a code snippet from XAI for requests to Grok:
+```
+import OpenAI from "openai";
+    
+const client = new OpenAI({
+  apiKey: XAI_API_KEY,
+  baseURL: "https://api.x.ai/v1",
+});
+
+const completion = await client.chat.completions.create({
+  model: "grok-3",
+  messages: [
+    { role: "user", content: "What is the meaning of life, the universe, and everything?" }
+  ]
+});
+```
+
+---
+## [ ] Milestone 3 – Streaming Responses
+Incremental tokens for OpenAI.
+
+### Backend
+* Upgrade `sendToOpenAI` for stream, expose via Node stream/SSE
+
+### Frontend
+* `LLMResponsePanel` appends real-time chunks
+* Optional pause / clear UI
+
+### Tests
+* Jest: simulate stream chunks → expect aggregation
+* Cypress: verify streaming text appears
+
+---
+## [ ] Milestone 4 – Group of Experts (GoE) – Alpha
+Parallel fan-out and naive aggregation.
+
+### Backend
+* `POST /llm/group` – `{ prompt, n }` → returns array + aggregated text
+
+### Frontend
+* Checkbox "Expert Mode (n=4)" (disabled for Grok)
+* Progress indicators for each sub-request
+
+### Tests
+* Supertest: assert `n` results then aggregation
+* Cypress: toggle expert mode → observe partials + final merge
+
+---
+## [ ] Milestone 5 – XML Patch Preview
+Handles XML-formatted code patches from LLMs.
+
+### Backend
+* `parseXmlPatches(xml)` utility
+* Pass through XML from provider
+
+### Frontend
+* Detect XML → "Apply Patch" modal with file list & diffs
+
+### Tests
+* Unit: XML → patch objects
+* Cypress: mock XML reply → modal appears
+
+---
+## Ongoing Guidelines
+* After every milestone: run unit, API, and Cypress tests
+* Mock external LLM calls in tests; use real keys only for manual QA
+* Update README & `.env.example` when new vars are introduced
