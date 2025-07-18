@@ -14,9 +14,13 @@
  */
 
 const sqlite3 = require('sqlite3').verbose();
+const path = require('path');
 
-// Respect DB_PATH from environment, or default to local prompts.db
-const DB_PATH = process.env.DB_PATH || './prompts.db';
+// Ensure we always resolve the DB file relative to this file's directory
+// so that restarting the server from a different CWD doesn\'t create a new empty DB.
+const DEFAULT_DB_PATH = path.join(__dirname, 'prompts.db');
+const DB_PATH = process.env.DB_PATH || DEFAULT_DB_PATH;
+
 const db = new sqlite3.Database(DB_PATH);
 
 db.serialize(() => {
