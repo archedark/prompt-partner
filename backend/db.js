@@ -104,4 +104,50 @@ const deletePrompt = (id, callback) => {
   db.run('DELETE FROM prompts WHERE id = ?', [id], callback);
 };
 
-module.exports = { createPrompt, getPrompts, updatePrompt, deletePrompt };
+/**
+ * @function replaceAllPrompts
+ * @description Replaces all rows in prompts table with provided data (used for import/restore)
+ * @param {Array} promptData - Array of prompt objects matching getPrompts output
+ * @param {function} callback - Callback with (err)
+ */
+const replaceAllPrompts = (promptData, callback) => {
+  if (!Array.isArray(promptData)) {
+    return callback(new Error('Prompt data must be an array'));
+  }
+
+  db.serialize(() => {
+    db.run('BEGIN TRANSACTION');
+
+    db.run('DELETE FROM prompts', (delErr) => {
+      if (delErr) {
+        db.run('ROLLBACK');
+        return callback(delErr);
+      }
+
+      const insertStmt = db.prepare(
+        'INSERT INTO prompts (name, content, tags, is_directory, files, created_at) VALUES (?,?,?,?,?,?)'
+      );
+
+      for (const p of promptData) {
+        insertStmt.run([
+          p.name || 'Untitled',
+          p.content || '',
+          p.tags || '',
+          p.isDirectory || p.is_directory ? 1 : 0,
+          JSON.stringify(p.files || []),
+          p.created_at || new Date().toISOString(),
+        ]);
+      }
+
+      insertStmt.finalize((stmtErr) => {
+        if (stmtErr) {
+          db.run('ROLLBACK');
+          return callback(stmtErr);
+        }
+        db.run('COMMIT', callback);
+      });
+    });
+  });
+};
+
+module.exports = { createPrompt, getPrompts, updatePrompt, deletePrompt, replaceAllPrompts };

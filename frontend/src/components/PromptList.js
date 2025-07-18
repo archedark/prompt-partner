@@ -33,7 +33,7 @@
  * - Maintains separate expanded states for prompts and file tree nodes.
  * - Added refresh button for directory prompts to manually update file list.
  */
-import React, { useState } from 'react';
+import React, { useState, useRef } from 'react';
 import {
   Box,
   Text,
@@ -45,6 +45,7 @@ import {
   Button,
   useToast,
   Badge,
+  Tooltip,
 } from '@chakra-ui/react';
 import { 
   DeleteIcon, 
@@ -54,6 +55,7 @@ import {
   CopyIcon,
   RepeatIcon,
   AddIcon,
+  DownloadIcon,
 } from '@chakra-ui/icons';
 import { countTokens, getTokenColorScheme } from '../utils/tokenizer';
 import FileTree from './FileTree';
@@ -79,6 +81,9 @@ const PromptList = ({
   const toast = useToast();
   const [expandedFileStates, setExpandedFileStates] = useState({});
   const [refreshingDirectories, setRefreshingDirectories] = useState({});
+
+  // Ref for hidden file input used for importing backups
+  const fileInputRef = useRef(null);
 
   const handleCopyPrompt = async (content, name) => {
     try {
@@ -141,21 +146,137 @@ const PromptList = ({
     }
   };
 
+  const handleImportClick = () => {
+    if (fileInputRef.current) {
+      fileInputRef.current.value = '';
+      fileInputRef.current.click();
+    }
+  };
+
+  const handleFileSelected = async (e) => {
+    const file = e.target.files[0];
+    if (!file) return;
+
+    try {
+      const text = await file.text();
+      let data;
+      try {
+        data = JSON.parse(text);
+      } catch (parseErr) {
+        throw new Error('Invalid JSON in backup file');
+      }
+
+      const response = await fetch(`${process.env.REACT_APP_API_URL}/backup`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(data),
+      });
+
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.error || 'Import failed');
+      }
+
+      toast({
+        title: 'Backup Imported',
+        status: 'success',
+        duration: 2000,
+        isClosable: true,
+      });
+
+      // Refresh prompts list in parent if callback provided
+      if (onRefreshPrompts) {
+        await onRefreshPrompts();
+      }
+    } catch (err) {
+      toast({
+        title: 'Import Failed',
+        description: err.message,
+        status: 'error',
+        duration: 4000,
+        isClosable: true,
+      });
+    }
+  };
+
   return (
     <Box bg="white" p={4} borderRadius="md" boxShadow="sm">
       <Flex align="center" justify="space-between" mb={3}>
         <Heading as="h2" size="md" m={0}>
           Prompts
         </Heading>
-        <IconButton
-          aria-label="Add Prompt"
-          icon={<AddIcon />}
-          colorScheme="green"
-          variant="outline"
-          size="sm"
-          borderRadius="md"
-          onClick={onAddPromptClick}
-        />
+        <Flex gap={2}>
+          <Tooltip label="Add Prompt" hasArrow>
+            <IconButton
+              aria-label="Add Prompt"
+              icon={<AddIcon />}
+              colorScheme="green"
+              variant="solid"
+              size="sm"
+              borderRadius="md"
+              onClick={onAddPromptClick}
+            />
+          </Tooltip>
+          <Tooltip label="Export Prompts" hasArrow>
+            <IconButton
+              aria-label="Export Prompts"
+              icon={<DownloadIcon />}
+              colorScheme="blue"
+              variant="solid"
+              size="sm"
+              borderRadius="md"
+              onClick={async () => {
+                try {
+                  const response = await fetch(`${process.env.REACT_APP_API_URL}/backup`);
+                  if (!response.ok) throw new Error('Failed to download backup');
+                  const blob = await response.blob();
+                  const url = window.URL.createObjectURL(blob);
+                  const link = document.createElement('a');
+                  const dateStr = new Date().toISOString().split('T')[0];
+                  link.href = url;
+                  link.setAttribute('download', `prompt-backup-${dateStr}.json`);
+                  document.body.appendChild(link);
+                  link.click();
+                  link.parentNode.removeChild(link);
+                  window.URL.revokeObjectURL(url);
+                  toast({
+                    title: 'Backup Downloaded',
+                    status: 'success',
+                    duration: 2000,
+                    isClosable: true,
+                  });
+                } catch (err) {
+                  toast({
+                    title: 'Download Failed',
+                    description: err.message,
+                    status: 'error',
+                    duration: 3000,
+                    isClosable: true,
+                  });
+                }
+              }}
+            />
+          </Tooltip>
+          <Tooltip label="Import Prompts" hasArrow>
+            <IconButton
+              aria-label="Import Prompts"
+              icon={<DownloadIcon transform="rotate(180deg)" />}
+              colorScheme="purple"
+              variant="solid"
+              size="sm"
+              borderRadius="md"
+              onClick={handleImportClick}
+            />
+          </Tooltip>
+          {/* Hidden file input */}
+          <input
+            type="file"
+            accept="application/json"
+            ref={fileInputRef}
+            style={{ display: 'none' }}
+            onChange={handleFileSelected}
+          />
+        </Flex>
       </Flex>
       <Stack spacing={4} maxH="400px" overflowY="auto" pr={2} data-testid="prompt-list">
         {prompts.length === 0 && (

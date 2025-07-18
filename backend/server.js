@@ -577,4 +577,72 @@ app.post('/directory/:id/refresh', (req, res) => {
   });
 });
 
+app.get('/backup', (req, res) => {
+  getPrompts((err, prompts) => {
+    if (err) {
+      console.error('Database error:', err.message);
+      return res.status(500).json({ error: 'Failed to generate backup: ' + err.message });
+    }
+
+    // Generate a filename like prompt-backup-2025-07-18.json
+    const dateStr = new Date().toISOString().split('T')[0];
+    const filename = `prompt-backup-${dateStr}.json`;
+
+    // Tell the browser this should be downloaded as a file
+    res.setHeader('Content-Disposition', `attachment; filename="${filename}"`);
+    res.json(prompts);
+  });
+});
+
+// Import prompts (restore from backup)
+app.post('/backup', (req, res) => {
+  const backupData = req.body;
+
+  if (!Array.isArray(backupData)) {
+    return res.status(400).json({ error: 'Backup payload must be an array of prompts' });
+  }
+
+  // Close and clear existing watchers since IDs will change after import
+  for (const [id, watcher] of watchers.entries()) {
+    try {
+      watcher.close();
+    } catch (e) {
+      // ignore
+    }
+  }
+  watchers.clear();
+
+  const { replaceAllPrompts } = require('./db');
+
+  replaceAllPrompts(backupData, (err) => {
+    if (err) {
+      console.error('Import error:', err.message);
+      return res.status(500).json({ error: 'Failed to import backup: ' + err.message });
+    }
+
+    // Recreate watchers for directory prompts
+    getPrompts((gpErr, prompts) => {
+      if (gpErr) {
+        console.error('Watcher recreation error:', gpErr.message);
+        return res.status(500).json({ error: 'Backup imported but failed to setup watchers' });
+      }
+
+      prompts
+        .filter(p => p.isDirectory)
+        .forEach(p => {
+          try {
+            const watcher = fs.watch(p.content, { recursive: true }, () => {
+              updateDirectoryPrompt(p.id, p.content);
+            });
+            watchers.set(p.id, watcher);
+          } catch (watchErr) {
+            console.error(`Failed to setup watcher for ${p.content}:`, watchErr);
+          }
+        });
+
+      res.status(201).json({ message: 'Backup imported', count: prompts.length });
+    });
+  });
+});
+
 app.listen(PORT, () => console.log(`Server running on port ${PORT}`));
